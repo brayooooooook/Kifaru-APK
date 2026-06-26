@@ -18,9 +18,9 @@ export function UserManagement({ token, onAlert }: { token: string; onAlert: (ms
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("teacher");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+useEffect(() => {
+  fetchUsers();
+}, [token]);
 
   const fetchUsers = async () => {
     try {
@@ -36,8 +36,11 @@ export function UserManagement({ token, onAlert }: { token: string; onAlert: (ms
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (editUser && editUser.username === "admin" && role !== "admin") {
-      onAlert("The role of the 'admin' user cannot be changed under any circumstance.", "error");
+      onAlert(
+        "The role of the 'admin' user cannot be changed under any circumstance.", 
+        8"error");
       return;
     }
     try {
@@ -81,6 +84,10 @@ export function UserManagement({ token, onAlert }: { token: string; onAlert: (ms
         onAlert("User created successfully", "success");
       }
       setShowModal(false);
+      setEditUser(null);
+      setUsername("");
+      setPassword("");
+      setRole("teacher");
       fetchUsers();
     } catch (err: any) {
       onAlert(err.message, "error");
@@ -88,7 +95,7 @@ export function UserManagement({ token, onAlert }: { token: string; onAlert: (ms
   };
 
   const toggleStatus = async (user: User) => {
-    if (user.username === "admin" || user.username?.toLowerCase() === "admin") {
+    if (user.username.toLowerCase() === "admin") {
       onAlert("The administrator account cannot be deleted or modified.", "error");
       return;
     }

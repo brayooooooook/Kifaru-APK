@@ -129,3 +129,17 @@ export interface ClassStatistics {
   lowestTotal: number;
   totalLearners: number;
 }
+
+
+// --- Report Card Types ---
+
+export interface LearnerAssessment {
+  learnerId: string;
+  assessmentId: string;
+  subjectMarks: Record<string, number>; // e.g., { "ENG": 80, "MAT": 90 }
+  updatedAt: any; // Firebase Timestamp
+}
+
+// This represents the full object returned by fetchLearnerFullReport
+// Keyed by assessmentId (e.g., "opener", "midterm")
+export type LearnerFullReport = Record<string, LearnerAssessment>;

@@ -47,7 +47,7 @@ useEffect(() => {
     if (editUser && editUser.username === "admin" && role !== "admin") {
       onAlert(
         "The role of the 'admin' user cannot be changed under any circumstance.", 
-        8"error");
+        "error");
       return;
     }
     try {

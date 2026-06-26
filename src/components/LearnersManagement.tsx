@@ -102,7 +102,7 @@ export default function LearnersManagement({
         learner =>
 
         learner.name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(
           search.toLowerCase()
         )
@@ -322,7 +322,8 @@ export default function LearnersManagement({
     }
 
   };
-    const deleteLearner =
+    
+  const deleteLearner =
   async(id:string)=>{
 
 

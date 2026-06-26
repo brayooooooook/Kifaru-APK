@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Grade 8 Blue Marks Management System",
+  "description": "Secure marks management, merit list generation, CBE achievement band calculation, and report card generator for Muchorwe Junior School.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

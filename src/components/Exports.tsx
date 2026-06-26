@@ -7,6 +7,7 @@ import React, { useRef, useState } from "react";
 import { calculateMeritList } from "../utils/assessmentEngine";
 import { SUBJECTS } from "../types";
 import type { Learner, AssessmentMarks } from "../types";
+
 import {
   Download,
   FileSpreadsheet,
@@ -15,6 +16,7 @@ import {
   FileText,
   RefreshCw
 } from "lucide-react";
+
 import * as XLSX from "xlsx";
 
 
@@ -46,6 +48,7 @@ export default function Exports({
   const [importingJson, setImportingJson] =
     useState(false);
 
+
   const fileInputRef =
     useRef<HTMLInputElement>(null);
 
@@ -54,15 +57,17 @@ export default function Exports({
   const handleExportXLSX = () => {
 
     if (!learners.length) {
+
       onAlert(
         "No learners to export",
         "error"
       );
+
       return;
     }
 
 
-    const ranked =
+    const rankedStudents =
       calculateMeritList(
         learners,
         marks
@@ -70,14 +75,14 @@ export default function Exports({
 
 
     const data =
-      ranked.map(student => {
+      rankedStudents.map(student => {
 
-        const row:any = {
+        const row: Record<string, any> = {
 
           "Position":
             student.position,
 
-          "Name":
+          "Full Name":
             student.name,
 
           "Total Marks":
@@ -136,6 +141,7 @@ export default function Exports({
 
 
 
+
   const handleDownloadBackup = () => {
 
     const backup = {
@@ -174,24 +180,25 @@ export default function Exports({
       URL.createObjectURL(blob);
 
 
-    const a =
+    const link =
       document.createElement("a");
 
 
-    a.href = url;
+    link.href = url;
 
-    a.download =
+
+    link.download =
       "school_backup.json";
 
 
-    a.click();
+    link.click();
 
 
     URL.revokeObjectURL(url);
 
 
     onAlert(
-      "Backup created",
+      "Backup created successfully",
       "success"
     );
 
@@ -199,10 +206,10 @@ export default function Exports({
 
 
 
-  const handleImportBackup =
-    (
-      e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+
+  const handleImportBackup = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
 
     const file =
       e.target.files?.[0];
@@ -251,12 +258,13 @@ export default function Exports({
 
 
 
+
   return (
 
     <div className="space-y-6">
 
 
-      <h2 className="text-2xl font-bold flex gap-2 items-center">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
 
         <Download />
 
@@ -270,6 +278,7 @@ export default function Exports({
 
 
         <div className="p-5 border rounded-xl">
+
 
           <h3 className="font-bold flex gap-2">
 
@@ -329,6 +338,7 @@ export default function Exports({
           </h3>
 
 
+
           <button
 
             onClick={handleDownloadBackup}
@@ -358,6 +368,7 @@ export default function Exports({
           />
 
 
+
           <button
 
             onClick={() =>
@@ -368,13 +379,19 @@ export default function Exports({
 
           >
 
-            {importingJson &&
+
+            {importingJson && (
+
               <RefreshCw className="animate-spin" />
-            }
+
+            )}
+
 
             Restore Backup
 
+
           </button>
+
 
 
         </div>
@@ -383,7 +400,7 @@ export default function Exports({
       </div>
 
 
-        </div>
+    </div>
 
   );
 

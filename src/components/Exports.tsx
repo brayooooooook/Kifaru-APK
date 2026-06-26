@@ -4,412 +4,310 @@
  */
 
 import React, { useRef, useState } from "react";
-import type {
-  Learner,
-  AssessmentMarks,
-  AssessmentConfig
-} from "../types";
-
-import {
-  Download,
-  FileSpreadsheet,
-  Printer,
-  Upload,
-  FileText,
-  RefreshCw
-} from "lucide-react";
-
+import { Download, Upload, FileSpreadsheet, Printer, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { calculateMeritList } from "../utils/assessmentEngine";
 import { SUBJECTS } from "../types";
 
+import type { Learner } from "../types";
+
 
 interface ExportsProps {
   learners: Learner[];
-  marks: AssessmentMarks;
-  remarks: Record<string,string>;
-  token:string;
-  config: AssessmentConfig;
-  onRefresh:()=>void;
-  onAlert:(msg:string,type:"success"|"error")=>void;
+  marks: any;
+  remarks: Record<string, string>;
+  token: string;
+  config: any;
+  onRefresh: () => void;
+  onAlert: (msg: string, type: "success" | "error") => void;
 }
 
 
 export default function Exports({
- learners,
- marks,
- remarks,
- token,
- config,
- onRefresh,
- onAlert
-}:ExportsProps){
+  learners,
+  marks,
+  remarks,
+  token,
+  config,
+  onRefresh,
+  onAlert
+}: ExportsProps) {
 
 
-const [importing,setImporting]=useState(false);
+  const [importing, setImporting] = useState(false);
 
-const fileRef = useRef<HTMLInputElement>(null);
-
-
-
-function exportExcel(){
-
- if(!learners.length){
-  onAlert("No learners available","error");
-  return;
- }
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
 
 
- const ranked = calculateMeritList(
-   learners,
-   marks
- );
+
+  const handleExportXLSX = () => {
+
+    const ranked =
+      calculateMeritList(
+        learners,
+        marks
+      );
 
 
- const rows = ranked.map(student=>{
+    const data =
+      ranked.map(student => {
 
-  const row:any={
-   Rank:student.position,
-   Name:student.name,
-   Total:student.total
+        const row: any = {
+
+          "Position": student.position,
+
+          "Name": student.name,
+
+          "Total Marks": student.total,
+
+          "Remark":
+            remarks[student.id] || ""
+
+        };
+
+
+        SUBJECTS.forEach(subject => {
+
+          row[subject.name] =
+            student.scores[subject.code] ?? 0;
+
+        });
+
+
+        return row;
+
+      });
+
+
+
+    const sheet =
+      XLSX.utils.json_to_sheet(data);
+
+
+    const workbook =
+      XLSX.utils.book_new();
+
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      sheet,
+      "Merit List"
+    );
+
+
+    XLSX.writeFile(
+      workbook,
+      `${config.className}_MeritList.xlsx`
+    );
+
+
+    onAlert(
+      "Excel exported successfully",
+      "success"
+    );
   };
 
 
-  SUBJECTS.forEach(subject=>{
-    row[subject.code]=student.scores[subject.code];
-  });
 
 
-  row.Remark =
-    remarks[student.id] ?? "";
+  const handleBackup = () => {
+
+    const backup = {
+
+      exportedAt:
+        new Date().toISOString(),
+
+      config,
+
+      learners,
+
+      marks,
+
+      remarks
+
+    };
 
 
-  return row;
-
- });
-
-
-
- const sheet =
- XLSX.utils.json_to_sheet(rows);
-
-
- const book =
- XLSX.utils.book_new();
-
-
- XLSX.utils.book_append_sheet(
-   book,
-   sheet,
-   "Merit List"
- );
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            backup,
+            null,
+            2
+          )
+        ],
+        {
+          type: "application/json"
+        }
+      );
 
 
- XLSX.writeFile(
-   book,
-   `${config.className}_Results.xlsx`
- );
+    const url =
+      URL.createObjectURL(blob);
 
 
- onAlert(
- "Excel exported successfully",
- "success"
- );
-
-}
+    const link =
+      document.createElement("a");
 
 
+    link.href = url;
+
+    link.download =
+      "school_backup.json";
 
 
-function exportBackup(){
-
- const backup={
-  exportedAt:new Date().toISOString(),
-  config,
-  learners,
-  marks,
-  remarks
- };
+    link.click();
 
 
- const blob =
- new Blob(
-  [
-   JSON.stringify(
-    backup,
-    null,
-    2
-   )
-  ],
-  {
-   type:"application/json"
-  }
- );
+    URL.revokeObjectURL(url);
 
 
- const url =
- URL.createObjectURL(blob);
-
-
- const link =
- document.createElement("a");
-
-
- link.href=url;
-
- link.download =
- `${config.className}_backup.json`;
-
-
- link.click();
-
-
- URL.revokeObjectURL(url);
-
-
- onAlert(
- "Backup created",
- "success"
- );
-
-}
+    onAlert(
+      "Backup exported",
+      "success"
+    );
+  };
 
 
 
 
-async function importBackup(
- e:React.ChangeEvent<HTMLInputElement>
-){
+  const handleImport =
+    (e: React.ChangeEvent<HTMLInputElement>) => {
 
- const file =
- e.target.files?.[0];
+      const file =
+        e.target.files?.[0];
 
-
- if(!file)return;
+      if (!file) return;
 
 
- if(file.size > 5_000_000){
+      setImporting(true);
 
-  onAlert(
-   "Backup file too large",
-   "error"
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload = () => {
+
+        try {
+
+          JSON.parse(
+            reader.result as string
+          );
+
+
+          onAlert(
+            "Backup file loaded",
+            "success"
+          );
+
+
+        } catch {
+
+          onAlert(
+            "Invalid backup file",
+            "error"
+          );
+
+        }
+
+
+        setImporting(false);
+
+      };
+
+
+      reader.readAsText(file);
+
+    };
+
+
+
+
+  return (
+
+    <div className="space-y-6">
+
+      <h2 className="text-xl font-bold">
+        Export & Backup Centre
+      </h2>
+
+
+
+      <button
+        onClick={handleExportXLSX}
+        className="p-3 rounded-lg bg-slate-100 flex gap-2"
+      >
+
+        <FileSpreadsheet />
+
+        Export Excel
+
+      </button>
+
+
+
+
+      <button
+        onClick={handleBackup}
+        className="p-3 rounded-lg bg-slate-100 flex gap-2"
+      >
+
+        <Download />
+
+        Backup JSON
+
+      </button>
+
+
+
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        hidden
+        onChange={handleImport}
+      />
+
+
+      <button
+        disabled={importing}
+        onClick={() =>
+          fileInputRef.current?.click()
+        }
+        className="p-3 rounded-lg bg-slate-100 flex gap-2"
+      >
+
+        {importing
+          ? <RefreshCw className="animate-spin"/>
+          : <Upload />
+        }
+
+        Restore Backup
+
+      </button>
+
+
+
+
+      <button
+        onClick={() => window.print()}
+        className="p-3 rounded-lg bg-slate-100 flex gap-2"
+      >
+
+        <Printer />
+
+        Print
+
+      </button>
+
+
+    </div>
+
   );
-
-  return;
- }
-
-
- setImporting(true);
-
-
- try{
-
-
- const text =
- await file.text();
-
-
- const parsed =
- JSON.parse(text);
-
-
- if(
- !Array.isArray(parsed.learners)
- ||
- !parsed.marks
- ){
-
- throw new Error(
- "Invalid backup format"
- );
-
- }
-
-
-
- const response =
- await fetch(
- "/api/learners/bulk",
- {
- method:"POST",
- headers:{
- "Content-Type":"application/json",
- Authorization:`Bearer ${token}`
- },
- body:JSON.stringify({
- learners:parsed.learners
- })
- }
- );
-
-
- if(!response.ok)
- throw new Error(
- "Learner restore failed"
- );
-
-
- onAlert(
- "Backup restored successfully",
- "success"
- );
-
-
- onRefresh();
-
-
-
- }catch(error){
-
- onAlert(
- error instanceof Error
- ? error.message
- : "Import failed",
- "error"
- );
-
-
- }finally{
-
- setImporting(false);
-
- }
-
-}
-
-
-
-
-return (
-
-<div className="space-y-8">
-
-
-<div>
-
-<h2 className="text-2xl font-bold flex gap-2">
-
-<Download/>
-
-Export Centre
-
-</h2>
-
-
-<p className="text-sm text-gray-500">
-Download reports or restore backups.
-</p>
-
-</div>
-
-
-
-<div className="grid md:grid-cols-2 gap-6">
-
-
-
-<div className="border rounded-xl p-6 space-y-4">
-
-
-<h3 className="font-bold flex gap-2">
-
-<FileText/>
-
-Reports
-
-</h3>
-
-
-
-<button
-onClick={exportExcel}
-className="w-full p-3 rounded-lg border flex gap-2"
->
-
-<FileSpreadsheet/>
-
-Export Excel
-
-</button>
-
-
-
-<button
-onClick={()=>window.print()}
-className="w-full p-3 rounded-lg border flex gap-2"
->
-
-<Printer/>
-
-Print PDF
-
-</button>
-
-
-</div>
-
-
-
-
-<div className="border rounded-xl p-6 space-y-4">
-
-
-<h3 className="font-bold">
-Backup
-</h3>
-
-
-<button
-onClick={exportBackup}
-className="w-full p-3 rounded-lg border flex gap-2"
->
-
-<Download/>
-
-Export JSON
-
-</button>
-
-
-
-<input
-ref={fileRef}
-type="file"
-accept=".json"
-hidden
-onChange={importBackup}
-/>
-
-
-<button
-disabled={importing}
-onClick={()=>fileRef.current?.click()}
-className="w-full p-3 rounded-lg border flex gap-2"
->
-
-
-{importing
-?
-<RefreshCw className="animate-spin"/>
-:
-<Upload/>
-}
-
-
-Restore Backup
-
-</button>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-);
 
 }

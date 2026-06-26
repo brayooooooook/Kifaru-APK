@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Learner } from "../types";
 
 import {
@@ -14,10 +14,7 @@ import {
   Check,
   X,
   FileSpreadsheet,
-  RotateCcw,
-  Search,
-  HelpCircle,
-  Trash
+  Search
 } from "lucide-react";
 
 import * as XLSX from "xlsx";
@@ -32,6 +29,7 @@ interface LearnersManagementProps {
     type: "success" | "error"
   ) => void;
 }
+
 
 
 export default function LearnersManagement({
@@ -55,14 +53,29 @@ export default function LearnersManagement({
   const [editAdmission, setEditAdmission] = useState("");
   const [editPhone, setEditPhone] = useState("");
 
-  const [importing, setImporting] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
 
 
-  const apiHeaders = {
+  const authHeaders = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`
   };
+
+
+
+  const filteredLearners = useMemo(() => {
+
+    return learners.filter(learner =>
+      learner.name
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+
+  }, [learners, search]);
+
+
 
 
 
@@ -73,19 +86,17 @@ export default function LearnersManagement({
     e.preventDefault();
 
 
-    if (!name.trim()) {
-      return;
-    }
+    if (!name.trim()) return;
 
 
     try {
 
-      const response =
+      const res =
         await fetch("/api/learners", {
 
           method: "POST",
 
-          headers: apiHeaders,
+          headers: authHeaders,
 
           body: JSON.stringify({
             name,
@@ -96,11 +107,11 @@ export default function LearnersManagement({
         });
 
 
-      if (!response.ok) {
-        throw new Error(
-          "Failed to add learner"
-        );
+
+      if (!res.ok) {
+        throw new Error("Failed to add learner");
       }
+
 
 
       onAlert(
@@ -116,7 +127,7 @@ export default function LearnersManagement({
       onRefresh();
 
 
-    } catch (error:any) {
+    } catch(error:any){
 
       onAlert(
         error.message,
@@ -130,15 +141,14 @@ export default function LearnersManagement({
 
 
 
+
   const startEdit = (
     learner:Learner
   ) => {
 
     setEditingId(learner.id);
 
-    setEditName(
-      learner.name
-    );
+    setEditName(learner.name);
 
     setEditAdmission(
       learner.admissionNumber || ""
@@ -153,42 +163,46 @@ export default function LearnersManagement({
 
 
 
+
   const saveEdit = async (
     id:string
   ) => {
 
-
     try {
 
-      const response =
+      const res =
         await fetch(
           `/api/learners/${id}`,
           {
 
             method:"PUT",
 
-            headers:apiHeaders,
+            headers:authHeaders,
 
             body:JSON.stringify({
 
               name:editName,
 
               admissionNumber:
-                editAdmission,
+              editAdmission,
 
               parentPhone:
-                editPhone
+              editPhone
 
             })
 
           });
 
 
-      if(!response.ok){
+
+      if(!res.ok){
+
         throw new Error(
           "Update failed"
         );
+
       }
+
 
 
       onAlert(
@@ -216,62 +230,91 @@ export default function LearnersManagement({
 
 
 
+
+
   const deleteLearner = async(
     id:string
-  )=>{
+  ) => {
 
 
     if(
       !confirm(
         "Delete this learner permanently?"
       )
-    ) return;
+    ){
+      return;
+    }
 
 
 
-    const response =
-      await fetch(
-        `/api/learners/${id}`,
-        {
-
-          method:"DELETE",
-
-          headers:{
-            Authorization:
-            `Bearer ${token}`
-          }
-
-        });
+    try{
 
 
+      const res =
+        await fetch(
+          `/api/learners/${id}`,
+          {
 
-    if(response.ok){
+            method:"DELETE",
+
+            headers:{
+              Authorization:
+              `Bearer ${token}`
+            }
+
+          });
+
+
+
+      if(!res.ok){
+
+        throw new Error(
+          "Delete failed"
+        );
+
+      }
+
+
 
       onAlert(
         "Learner deleted",
         "success"
       );
 
+
       onRefresh();
 
-    }
 
+
+    }catch(error:any){
+
+      onAlert(
+        error.message,
+        "error"
+      );
+
+    }
 
   };
 
 
 
 
+
+
+
   const importExcel = (
     file:File
-  )=>{
+  ) => {
 
 
-    setImporting(true);
+    setLoading(true);
+
 
 
     const reader =
       new FileReader();
+
 
 
     reader.onload =
@@ -290,14 +333,17 @@ export default function LearnersManagement({
           );
 
 
+
         const sheet =
           workbook.Sheets[
             workbook.SheetNames[0]
           ];
 
 
+
         const rows =
-          XLSX.utils.sheet_to_json<any>(
+          XLSX.utils
+          .sheet_to_json<any>(
             sheet
           );
 
@@ -307,43 +353,45 @@ export default function LearnersManagement({
           rows.map(row=>({
 
             name:
-              String(
-                row.Name ||
-                row["Learner Name"] ||
-                ""
-              ),
+            String(
+              row.Name ||
+              row["Learner Name"] ||
+              ""
+            ),
+
 
             admissionNumber:
-              String(
-                row.Admission ||
-                row["Admission Number"] ||
-                ""
-              ),
+            String(
+              row.Admission ||
+              row["Admission Number"] ||
+              ""
+            ),
+
 
             parentPhone:
-              String(
-                row.Phone ||
-                ""
-              )
+            String(
+              row.Phone ||
+              row["Parent Phone"] ||
+              ""
+            )
 
           }))
           .filter(
-            x=>x.name
+            item=>item.name
           );
 
 
 
-        const response =
+        const res =
           await fetch(
             "/api/learners/bulk",
             {
 
               method:"POST",
 
-              headers:apiHeaders,
+              headers:authHeaders,
 
-              body:
-              JSON.stringify({
+              body:JSON.stringify({
                 learners:imported
               })
 
@@ -351,10 +399,12 @@ export default function LearnersManagement({
 
 
 
-        if(!response.ok){
+        if(!res.ok){
+
           throw new Error(
             "Import failed"
           );
+
         }
 
 
@@ -376,11 +426,13 @@ export default function LearnersManagement({
           "error"
         );
 
+
       }finally{
 
-        setImporting(false);
+        setLoading(false);
 
       }
+
 
     };
 
@@ -390,17 +442,6 @@ export default function LearnersManagement({
   };
 
 
-
-
-  const filtered =
-    learners.filter(
-      learner =>
-        learner.name
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    );
 
 
 
@@ -416,8 +457,11 @@ export default function LearnersManagement({
 
 
 
-      <div className="bg-white p-5 rounded-xl border">
 
+      <form
+        onSubmit={handleAdd}
+        className="bg-white p-5 rounded-xl border space-y-3"
+      >
 
         <h3 className="font-bold flex gap-2">
 
@@ -429,55 +473,54 @@ export default function LearnersManagement({
 
 
 
-        <form
-          onSubmit={handleAdd}
-          className="space-y-3 mt-4"
+        <input
+          className="border p-2 rounded w-full"
+          placeholder="Learner name"
+          value={name}
+          onChange={
+            e=>setName(e.target.value)
+          }
+        />
+
+
+
+        <input
+          className="border p-2 rounded w-full"
+          placeholder="Admission number"
+          value={admissionNumber}
+          onChange={
+            e=>setAdmissionNumber(
+              e.target.value
+            )
+          }
+        />
+
+
+
+        <input
+          className="border p-2 rounded w-full"
+          placeholder="Parent phone"
+          value={parentPhone}
+          onChange={
+            e=>setParentPhone(
+              e.target.value
+            )
+          }
+        />
+
+
+
+        <button
+        className="bg-[#1b365d] text-white p-2 rounded w-full"
         >
 
-          <input
-            className="border p-2 rounded w-full"
-            placeholder="Learner name"
-            value={name}
-            onChange={
-              e=>setName(e.target.value)
-            }
-          />
+          Add Learner
+
+        </button>
 
 
-          <input
-            className="border p-2 rounded w-full"
-            placeholder="Admission number"
-            value={admissionNumber}
-            onChange={
-              e=>setAdmissionNumber(
-                e.target.value
-              )
-            }
-          />
+      </form>
 
-
-          <input
-            className="border p-2 rounded w-full"
-            placeholder="Parent phone"
-            value={parentPhone}
-            onChange={
-              e=>setParentPhone(
-                e.target.value
-              )
-            }
-          />
-
-
-          <button className="bg-[#1b365d] text-white p-2 rounded w-full">
-
-            Add Learner
-
-          </button>
-
-
-        </form>
-
-      </div>
 
 
 
@@ -488,112 +531,147 @@ export default function LearnersManagement({
 
         <input
 
-          className="border p-2 rounded w-full"
+        className="border p-2 rounded w-full"
 
-          placeholder="Search learner..."
+        placeholder="Search learner"
 
-          onChange={
-            e=>setSearch(
-              e.target.value
-            )
-          }
+        onChange={
+          e=>setSearch(
+            e.target.value
+          )
+        }
 
         />
 
-      </div>
 
+        <label className="cursor-pointer">
 
-
-
-
-      <div className="bg-white rounded-xl border overflow-hidden">
-
-        {filtered.map(
-          (learner,index)=>(
-
-
-          <div
-            key={learner.id}
-            className="p-4 border-b flex justify-between"
-          >
-
-
-          <div>
-
-          {editingId===learner.id ?
+          <Upload />
 
           <input
-            value={editName}
-            onChange={
-              e=>setEditName(
-                e.target.value
-              )
+          hidden
+          type="file"
+          accept=".xlsx,.csv"
+          onChange={
+            e=>{
+              const file =
+              e.target.files?.[0];
+
+              if(file)
+              importExcel(file);
             }
-            className="border p-1"
+          }
           />
 
-          :
+        </label>
 
-          <p className="font-semibold">
-
-          {index+1}.
-          {learner.name}
-
-          </p>
-
-          }
-
-
-          </div>
-
-
-
-          <div className="flex gap-2">
-
-
-          <button
-          onClick={()=>
-            startEdit(learner)
-          }
-          >
-
-          <Edit2 size={18}/>
-
-          </button>
-
-
-
-          <button
-          onClick={()=>
-            deleteLearner(
-              learner.id
-            )
-          }
-          >
-
-          <Trash2
-          size={18}
-          />
-
-          </button>
-
-
-
-          </div>
-
-
-          </div>
-
-
-          )
-
-        )}
 
       </div>
+
+
+
+
+
+      <div className="bg-white rounded-xl border">
+
+
+      {filteredLearners.map(
+        (learner,index)=>(
+
+
+        <div
+        key={learner.id}
+        className="p-4 border-b flex justify-between"
+        >
+
+
+        {
+        editingId===learner.id ?
+
+        <input
+        value={editName}
+        onChange={
+          e=>setEditName(
+            e.target.value
+          )
+        }
+        className="border p-1"
+        />
+
+        :
+
+        <span>
+        {index+1}. {learner.name}
+        </span>
+
+        }
+
+
+
+        <div className="flex gap-2">
+
+
+        {
+        editingId===learner.id ?
+
+        <button
+        onClick={()=>
+          saveEdit(
+            learner.id
+          )
+        }
+        >
+        <Check />
+        </button>
+
+        :
+
+        <button
+        onClick={()=>
+          startEdit(learner)
+        }
+        >
+        <Edit2 />
+        </button>
+
+        }
+
+
+
+        <button
+        onClick={()=>
+          deleteLearner(
+            learner.id
+          )
+        }
+        >
+
+        <Trash2 />
+
+        </button>
+
+
+        </div>
+
+
+        </div>
+
+
+      ))}
+
+
+      </div>
+
+
+      {loading && (
+        <p>
+          Importing file...
+        </p>
+      )}
 
 
     </div>
 
   );
 
-            }
+}

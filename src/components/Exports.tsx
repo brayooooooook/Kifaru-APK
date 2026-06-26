@@ -4,23 +4,31 @@
  */
 
 import React, { useRef, useState } from "react";
-import { Download, Upload, FileSpreadsheet, Printer, RefreshCw } from "lucide-react";
-import * as XLSX from "xlsx";
-
 import { calculateMeritList } from "../utils/assessmentEngine";
 import { SUBJECTS } from "../types";
-
-import type { Learner } from "../types";
+import type { Learner, AssessmentMarks } from "../types";
+import {
+  Download,
+  FileSpreadsheet,
+  Printer,
+  Upload,
+  FileText,
+  RefreshCw
+} from "lucide-react";
+import * as XLSX from "xlsx";
 
 
 interface ExportsProps {
   learners: Learner[];
-  marks: any;
+  marks: AssessmentMarks;
   remarks: Record<string, string>;
   token: string;
   config: any;
   onRefresh: () => void;
-  onAlert: (msg: string, type: "success" | "error") => void;
+  onAlert: (
+    msg: string,
+    type: "success" | "error"
+  ) => void;
 }
 
 
@@ -35,7 +43,8 @@ export default function Exports({
 }: ExportsProps) {
 
 
-  const [importing, setImporting] = useState(false);
+  const [importingJson, setImportingJson] =
+    useState(false);
 
   const fileInputRef =
     useRef<HTMLInputElement>(null);
@@ -43,6 +52,15 @@ export default function Exports({
 
 
   const handleExportXLSX = () => {
+
+    if (!learners.length) {
+      onAlert(
+        "No learners to export",
+        "error"
+      );
+      return;
+    }
+
 
     const ranked =
       calculateMeritList(
@@ -54,16 +72,16 @@ export default function Exports({
     const data =
       ranked.map(student => {
 
-        const row: any = {
+        const row:any = {
 
-          "Position": student.position,
+          "Position":
+            student.position,
 
-          "Name": student.name,
+          "Name":
+            student.name,
 
-          "Total Marks": student.total,
-
-          "Remark":
-            remarks[student.id] || ""
+          "Total Marks":
+            student.total
 
         };
 
@@ -71,9 +89,15 @@ export default function Exports({
         SUBJECTS.forEach(subject => {
 
           row[subject.name] =
-            student.scores[subject.code] ?? 0;
+            student.scores[
+              subject.code
+            ] ?? 0;
 
         });
+
+
+        row["Remark"] =
+          remarks[student.id] || "";
 
 
         return row;
@@ -82,7 +106,7 @@ export default function Exports({
 
 
 
-    const sheet =
+    const worksheet =
       XLSX.utils.json_to_sheet(data);
 
 
@@ -92,7 +116,7 @@ export default function Exports({
 
     XLSX.utils.book_append_sheet(
       workbook,
-      sheet,
+      worksheet,
       "Merit List"
     );
 
@@ -107,12 +131,12 @@ export default function Exports({
       "Excel exported successfully",
       "success"
     );
+
   };
 
 
 
-
-  const handleBackup = () => {
+  const handleDownloadBackup = () => {
 
     const backup = {
 
@@ -140,7 +164,8 @@ export default function Exports({
           )
         ],
         {
-          type: "application/json"
+          type:
+          "application/json"
         }
       );
 
@@ -149,81 +174,80 @@ export default function Exports({
       URL.createObjectURL(blob);
 
 
-    const link =
+    const a =
       document.createElement("a");
 
 
-    link.href = url;
+    a.href = url;
 
-    link.download =
+    a.download =
       "school_backup.json";
 
 
-    link.click();
+    a.click();
 
 
     URL.revokeObjectURL(url);
 
 
     onAlert(
-      "Backup exported",
+      "Backup created",
       "success"
     );
+
   };
 
 
 
+  const handleImportBackup =
+    (
+      e: React.ChangeEvent<HTMLInputElement>
+    ) => {
 
-  const handleImport =
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-
-      const file =
-        e.target.files?.[0];
-
-      if (!file) return;
-
-
-      setImporting(true);
+    const file =
+      e.target.files?.[0];
 
 
-      const reader =
-        new FileReader();
+    if (!file) return;
 
 
-      reader.onload = () => {
-
-        try {
-
-          JSON.parse(
-            reader.result as string
-          );
+    const reader =
+      new FileReader();
 
 
-          onAlert(
-            "Backup file loaded",
-            "success"
-          );
+    reader.onload = () => {
+
+      try {
+
+        JSON.parse(
+          reader.result as string
+        );
 
 
-        } catch {
-
-          onAlert(
-            "Invalid backup file",
-            "error"
-          );
-
-        }
+        setImportingJson(false);
 
 
-        setImporting(false);
+        onAlert(
+          "Backup file loaded",
+          "success"
+        );
 
-      };
 
+      } catch {
 
-      reader.readAsText(file);
+        onAlert(
+          "Invalid backup file",
+          "error"
+        );
+
+      }
 
     };
 
+
+    reader.readAsText(file);
+
+  };
 
 
 
@@ -231,83 +255,136 @@ export default function Exports({
 
     <div className="space-y-6">
 
-      <h2 className="text-xl font-bold">
+
+      <h2 className="text-2xl font-bold flex gap-2 items-center">
+
+        <Download />
+
         Export & Backup Centre
+
       </h2>
 
 
 
-      <button
-        onClick={handleExportXLSX}
-        className="p-3 rounded-lg bg-slate-100 flex gap-2"
-      >
-
-        <FileSpreadsheet />
-
-        Export Excel
-
-      </button>
+      <div className="grid md:grid-cols-2 gap-6">
 
 
+        <div className="p-5 border rounded-xl">
 
+          <h3 className="font-bold flex gap-2">
 
-      <button
-        onClick={handleBackup}
-        className="p-3 rounded-lg bg-slate-100 flex gap-2"
-      >
+            <FileText />
 
-        <Download />
+            Reports
 
-        Backup JSON
-
-      </button>
+          </h3>
 
 
 
+          <button
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        hidden
-        onChange={handleImport}
-      />
+            onClick={handleExportXLSX}
+
+            className="mt-4 w-full p-3 bg-slate-100 rounded-lg flex gap-2"
+
+          >
+
+            <FileSpreadsheet />
+
+            Export Excel
+
+          </button>
 
 
-      <button
-        disabled={importing}
-        onClick={() =>
-          fileInputRef.current?.click()
-        }
-        className="p-3 rounded-lg bg-slate-100 flex gap-2"
-      >
 
-        {importing
-          ? <RefreshCw className="animate-spin"/>
-          : <Upload />
-        }
+          <button
 
-        Restore Backup
+            onClick={() => window.print()}
 
-      </button>
+            className="mt-3 w-full p-3 bg-slate-100 rounded-lg flex gap-2"
+
+          >
+
+            <Printer />
+
+            Print PDF
+
+          </button>
+
+
+        </div>
 
 
 
 
-      <button
-        onClick={() => window.print()}
-        className="p-3 rounded-lg bg-slate-100 flex gap-2"
-      >
+        <div className="p-5 border rounded-xl">
 
-        <Printer />
 
-        Print
+          <h3 className="font-bold flex gap-2">
 
-      </button>
+            <Upload />
+
+            Backup
+
+          </h3>
+
+
+          <button
+
+            onClick={handleDownloadBackup}
+
+            className="mt-4 w-full p-3 bg-slate-100 rounded-lg"
+
+          >
+
+            Download Backup
+
+          </button>
+
+
+
+          <input
+
+            hidden
+
+            ref={fileInputRef}
+
+            type="file"
+
+            accept=".json"
+
+            onChange={handleImportBackup}
+
+          />
+
+
+          <button
+
+            onClick={() =>
+              fileInputRef.current?.click()
+            }
+
+            className="mt-3 w-full p-3 bg-slate-100 rounded-lg flex gap-2"
+
+          >
+
+            {importingJson &&
+              <RefreshCw className="animate-spin" />
+            }
+
+            Restore Backup
+
+          </button>
+
+
+        </div>
+
+
+      </div>
 
 
     </div>
 
   );
 
-}
+      }

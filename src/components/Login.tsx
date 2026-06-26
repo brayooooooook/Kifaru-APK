@@ -38,9 +38,12 @@ try {
 } catch {
   throw new Error("Invalid server response");
 }
-      if (!response.ok) {
+
+if (!response.ok) {
   throw new Error(data.error || "Login failed");
-      }
+}
+
+onLoginSuccess(data.token, data.config, data.user);
       onLoginSuccess(data.token, data.config, data.user);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");

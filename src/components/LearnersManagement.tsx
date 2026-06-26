@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from "react";
+import React, {
+  useMemo,
+  useState
+} from "react";
+
 import type { Learner } from "../types";
 
 import {
@@ -13,7 +17,6 @@ import {
   Edit2,
   Check,
   X,
-  FileSpreadsheet,
   Search
 } from "lucide-react";
 
@@ -21,96 +24,159 @@ import * as XLSX from "xlsx";
 
 
 interface LearnersManagementProps {
+
   learners: Learner[];
+
   token: string;
+
   onRefresh: () => void;
+
   onAlert: (
     message: string,
     type: "success" | "error"
   ) => void;
+
 }
 
 
 
 export default function LearnersManagement({
+
   learners,
   token,
   onRefresh,
   onAlert
+
 }: LearnersManagementProps) {
 
 
-  const [name, setName] = useState("");
-  const [admissionNumber, setAdmissionNumber] = useState("");
-  const [parentPhone, setParentPhone] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [name,setName] =
+    useState("");
 
-  const [editingId, setEditingId] =
+  const [admissionNumber,setAdmissionNumber] =
+    useState("");
+
+  const [parentPhone,setParentPhone] =
+    useState("");
+
+
+
+  const [search,setSearch] =
+    useState("");
+
+
+
+  const [editingId,setEditingId] =
     useState<string | null>(null);
 
-  const [editName, setEditName] = useState("");
-  const [editAdmission, setEditAdmission] = useState("");
-  const [editPhone, setEditPhone] = useState("");
 
-  const [loading, setLoading] =
+
+  const [editName,setEditName] =
+    useState("");
+
+  const [editAdmission,setEditAdmission] =
+    useState("");
+
+  const [editPhone,setEditPhone] =
+    useState("");
+
+
+
+  const [loading,setLoading] =
     useState(false);
 
 
 
-  const authHeaders = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`
+
+  const headers = {
+
+    "Content-Type":"application/json",
+
+    Authorization:
+      `Bearer ${token}`
+
   };
 
 
 
-  const filteredLearners = useMemo(() => {
 
-    return learners.filter(learner =>
-      learner.name
+  const filteredLearners =
+    useMemo(()=>{
+
+
+      return learners.filter(
+        learner =>
+
+        learner.name
         .toLowerCase()
-        .includes(search.toLowerCase())
-    );
+        .includes(
+          search.toLowerCase()
+        )
 
-  }, [learners, search]);
+        ||
+
+        learner.admissionNumber
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+
+      );
+
+
+    },[learners,search]);
 
 
 
 
 
-  const handleAdd = async (
-    e: React.FormEvent
-  ) => {
+
+
+  const handleAdd =
+  async(
+    e:React.FormEvent
+  )=>{
+
 
     e.preventDefault();
 
 
-    if (!name.trim()) return;
+    if(!name.trim())
+      return;
 
 
-    try {
 
-      const res =
-        await fetch("/api/learners", {
+    try{
 
-          method: "POST",
 
-          headers: authHeaders,
+      const response =
+      await fetch(
+        "/api/learners",
+        {
 
-          body: JSON.stringify({
+          method:"POST",
+
+          headers,
+
+          body:JSON.stringify({
+
             name,
+
             admissionNumber,
+
             parentPhone
+
           })
 
         });
 
 
 
-      if (!res.ok) {
-        throw new Error("Failed to add learner");
-      }
+      if(!response.ok)
+        throw new Error(
+          "Failed to add learner"
+        );
 
 
 
@@ -121,99 +187,13 @@ export default function LearnersManagement({
 
 
       setName("");
+
       setAdmissionNumber("");
+
       setParentPhone("");
 
       onRefresh();
 
-
-    } catch(error:any){
-
-      onAlert(
-        error.message,
-        "error"
-      );
-
-    }
-
-  };
-
-
-
-
-
-  const startEdit = (
-    learner:Learner
-  ) => {
-
-    setEditingId(learner.id);
-
-    setEditName(learner.name);
-
-    setEditAdmission(
-      learner.admissionNumber || ""
-    );
-
-    setEditPhone(
-      learner.parentPhone || ""
-    );
-
-  };
-
-
-
-
-
-  const saveEdit = async (
-    id:string
-  ) => {
-
-    try {
-
-      const res =
-        await fetch(
-          `/api/learners/${id}`,
-          {
-
-            method:"PUT",
-
-            headers:authHeaders,
-
-            body:JSON.stringify({
-
-              name:editName,
-
-              admissionNumber:
-              editAdmission,
-
-              parentPhone:
-              editPhone
-
-            })
-
-          });
-
-
-
-      if(!res.ok){
-
-        throw new Error(
-          "Update failed"
-        );
-
-      }
-
-
-
-      onAlert(
-        "Learner updated",
-        "success"
-      );
-
-
-      setEditingId(null);
-
-      onRefresh();
 
 
     }catch(error:any){
@@ -225,6 +205,7 @@ export default function LearnersManagement({
 
     }
 
+
   };
 
 
@@ -232,47 +213,175 @@ export default function LearnersManagement({
 
 
 
-  const deleteLearner = async(
+
+
+
+  const startEdit =
+  (learner:Learner)=>{
+
+
+    setEditingId(
+      learner.id
+    );
+
+
+    setEditName(
+      learner.name
+    );
+
+
+    setEditAdmission(
+      learner.admissionNumber || ""
+    );
+
+
+    setEditPhone(
+      learner.parentPhone || ""
+    );
+
+
+  };
+
+
+
+
+
+
+
+
+  const cancelEdit =
+  ()=>{
+
+    setEditingId(null);
+
+    setEditName("");
+
+    setEditAdmission("");
+
+    setEditPhone("");
+
+  };
+
+
+
+
+
+
+
+
+
+  const saveEdit =
+  async(
     id:string
-  ) => {
+  )=>{
+
+
+    try{
+
+
+      const response =
+      await fetch(
+        `/api/learners/${id}`,
+        {
+
+          method:"PUT",
+
+          headers,
+
+          body:JSON.stringify({
+
+            name:editName,
+
+            admissionNumber:
+            editAdmission,
+
+            parentPhone:
+            editPhone
+
+          })
+
+        });
+
+
+
+      if(!response.ok)
+        throw new Error(
+          "Update failed"
+        );
+
+
+
+      onAlert(
+        "Learner updated",
+        "success"
+      );
+
+
+      cancelEdit();
+
+      onRefresh();
+
+
+
+    }catch(error:any){
+
+      onAlert(
+        error.message,
+        "error"
+      );
+
+    }
+
+
+  };
+
+
+
+
+
+
+
+
+
+  const deleteLearner =
+  async(
+    id:string
+  )=>{
 
 
     if(
       !confirm(
         "Delete this learner permanently?"
       )
-    ){
+    )
       return;
-    }
+
 
 
 
     try{
 
 
-      const res =
-        await fetch(
-          `/api/learners/${id}`,
-          {
+      const response =
+      await fetch(
+        `/api/learners/${id}`,
+        {
 
-            method:"DELETE",
+          method:"DELETE",
 
-            headers:{
-              Authorization:
-              `Bearer ${token}`
-            }
+          headers:{
+            Authorization:
+            `Bearer ${token}`
+          }
 
-          });
+        });
 
 
 
-      if(!res.ok){
-
+      if(!response.ok)
         throw new Error(
           "Delete failed"
         );
-
-      }
 
 
 
@@ -295,6 +404,7 @@ export default function LearnersManagement({
 
     }
 
+
   };
 
 
@@ -303,9 +413,10 @@ export default function LearnersManagement({
 
 
 
-  const importExcel = (
-    file:File
-  ) => {
+
+
+  const importExcel =
+  (file:File)=>{
 
 
     setLoading(true);
@@ -313,99 +424,145 @@ export default function LearnersManagement({
 
 
     const reader =
-      new FileReader();
+    new FileReader();
 
 
 
     reader.onload =
-      async(event)=>{
+    async(event)=>{
 
 
       try{
 
 
         const workbook =
-          XLSX.read(
-            event.target?.result,
-            {
-              type:"binary"
-            }
-          );
+        XLSX.read(
+          event.target?.result,
+          {
+            type:"binary"
+          }
+        );
 
 
 
         const sheet =
-          workbook.Sheets[
-            workbook.SheetNames[0]
-          ];
+        workbook.Sheets[
+          workbook.SheetNames[0]
+        ];
 
 
 
         const rows =
-          XLSX.utils
-          .sheet_to_json<any>(
-            sheet
-          );
+        XLSX.utils.sheet_to_json<any>(
+          sheet
+        );
 
 
 
         const imported =
-          rows.map(row=>({
+        rows.map(row=>{
+
+
+          const keys =
+          Object.keys(row);
+
+
+
+          const nameKey =
+          keys.find(
+            key =>
+            key.toLowerCase()
+            .includes("name")
+            ||
+            key.toLowerCase()
+            .includes("learner")
+            ||
+            key.toLowerCase()
+            .includes("student")
+          );
+
+
+
+          const admissionKey =
+          keys.find(
+            key =>
+            key.toLowerCase()
+            .includes("adm")
+            ||
+            key.toLowerCase()
+            .includes("number")
+          );
+
+
+
+          const phoneKey =
+          keys.find(
+            key =>
+            key.toLowerCase()
+            .includes("phone")
+            ||
+            key.toLowerCase()
+            .includes("contact")
+          );
+
+
+
+          return {
 
             name:
             String(
-              row.Name ||
-              row["Learner Name"] ||
-              ""
-            ),
+              row[nameKey || ""]
+              || ""
+            ).trim(),
 
 
             admissionNumber:
             String(
-              row.Admission ||
-              row["Admission Number"] ||
-              ""
-            ),
+              row[admissionKey || ""]
+              || ""
+            ).trim(),
 
 
             parentPhone:
             String(
-              row.Phone ||
-              row["Parent Phone"] ||
-              ""
-            )
+              row[phoneKey || ""]
+              || ""
+            ).trim()
 
-          }))
-          .filter(
-            item=>item.name
-          );
+          };
 
 
-
-        const res =
-          await fetch(
-            "/api/learners/bulk",
-            {
-
-              method:"POST",
-
-              headers:authHeaders,
-
-              body:JSON.stringify({
-                learners:imported
-              })
-
-            });
+        })
+        .filter(
+          item =>
+          item.name
+        );
 
 
 
-        if(!res.ok){
 
+
+        const response =
+        await fetch(
+          "/api/learners/bulk",
+          {
+
+            method:"POST",
+
+            headers,
+
+            body:JSON.stringify({
+              learners:imported
+            })
+
+          });
+
+
+
+        if(!response.ok)
           throw new Error(
             "Import failed"
           );
-
-        }
 
 
 
@@ -429,7 +586,9 @@ export default function LearnersManagement({
 
       }finally{
 
+
         setLoading(false);
+
 
       }
 
@@ -437,7 +596,9 @@ export default function LearnersManagement({
     };
 
 
+
     reader.readAsBinaryString(file);
+
 
   };
 
@@ -451,6 +612,7 @@ export default function LearnersManagement({
     <div className="space-y-6">
 
 
+
       <h2 className="text-2xl font-bold">
         Learners Management
       </h2>
@@ -458,14 +620,16 @@ export default function LearnersManagement({
 
 
 
+
       <form
-        onSubmit={handleAdd}
-        className="bg-white p-5 rounded-xl border space-y-3"
+      onSubmit={handleAdd}
+      className="bg-white p-5 rounded-xl border space-y-3"
       >
+
 
         <h3 className="font-bold flex gap-2">
 
-          <UserPlus />
+          <UserPlus/>
 
           Register Learner
 
@@ -474,38 +638,38 @@ export default function LearnersManagement({
 
 
         <input
-          className="border p-2 rounded w-full"
-          placeholder="Learner name"
-          value={name}
-          onChange={
-            e=>setName(e.target.value)
-          }
+        className="border p-2 rounded w-full"
+        placeholder="Learner name"
+        value={name}
+        onChange={
+          e=>setName(e.target.value)
+        }
         />
 
 
 
         <input
-          className="border p-2 rounded w-full"
-          placeholder="Admission number"
-          value={admissionNumber}
-          onChange={
-            e=>setAdmissionNumber(
-              e.target.value
-            )
-          }
+        className="border p-2 rounded w-full"
+        placeholder="Admission number"
+        value={admissionNumber}
+        onChange={
+          e=>setAdmissionNumber(
+            e.target.value
+          )
+        }
         />
 
 
 
         <input
-          className="border p-2 rounded w-full"
-          placeholder="Parent phone"
-          value={parentPhone}
-          onChange={
-            e=>setParentPhone(
-              e.target.value
-            )
-          }
+        className="border p-2 rounded w-full"
+        placeholder="Parent phone"
+        value={parentPhone}
+        onChange={
+          e=>setParentPhone(
+            e.target.value
+          )
+        }
         />
 
 
@@ -525,28 +689,30 @@ export default function LearnersManagement({
 
 
 
-      <div className="flex gap-2">
 
-        <Search />
+
+      <div className="flex gap-3 items-center">
+
+
+        <Search/>
+
 
         <input
-
-        className="border p-2 rounded w-full"
-
+        className="border p-2 rounded flex-1"
         placeholder="Search learner"
-
         onChange={
           e=>setSearch(
             e.target.value
           )
         }
-
         />
+
 
 
         <label className="cursor-pointer">
 
-          <Upload />
+          <Upload/>
+
 
           <input
           hidden
@@ -554,11 +720,13 @@ export default function LearnersManagement({
           accept=".xlsx,.csv"
           onChange={
             e=>{
+
               const file =
               e.target.files?.[0];
 
               if(file)
-              importExcel(file);
+                importExcel(file);
+
             }
           }
           />
@@ -572,11 +740,14 @@ export default function LearnersManagement({
 
 
 
-      <div className="bg-white rounded-xl border">
+
+
+
+      <div className="bg-white rounded-xl border overflow-hidden">
 
 
       {filteredLearners.map(
-        (learner,index)=>(
+      (learner,index)=>(
 
 
         <div
@@ -585,26 +756,69 @@ export default function LearnersManagement({
         >
 
 
+
+        <div>
+
+
         {
         editingId===learner.id ?
 
-        <input
-        value={editName}
-        onChange={
-          e=>setEditName(
-            e.target.value
-          )
-        }
-        className="border p-1"
-        />
+
+        <div className="space-y-2">
+
+
+          <input
+          className="border p-1"
+          value={editName}
+          onChange={
+            e=>setEditName(
+              e.target.value
+            )
+          }
+          />
+
+
+          <input
+          className="border p-1"
+          value={editAdmission}
+          onChange={
+            e=>setEditAdmission(
+              e.target.value
+            )
+          }
+          />
+
+
+          <input
+          className="border p-1"
+          value={editPhone}
+          onChange={
+            e=>setEditPhone(
+              e.target.value
+            )
+          }
+          />
+
+
+        </div>
+
 
         :
 
-        <span>
-        {index+1}. {learner.name}
-        </span>
+
+        <p className="font-semibold">
+
+          {index+1}. {learner.name}
+
+        </p>
 
         }
+
+
+        </div>
+
+
+
 
 
 
@@ -614,6 +828,7 @@ export default function LearnersManagement({
         {
         editingId===learner.id ?
 
+
         <button
         onClick={()=>
           saveEdit(
@@ -621,17 +836,38 @@ export default function LearnersManagement({
           )
         }
         >
-        <Check />
+
+          <Check/>
+
         </button>
 
+
         :
+
 
         <button
         onClick={()=>
           startEdit(learner)
         }
         >
-        <Edit2 />
+
+          <Edit2/>
+
+        </button>
+
+        }
+
+
+
+        {
+        editingId===learner.id &&
+
+        <button
+        onClick={cancelEdit}
+        >
+
+          <X/>
+
         </button>
 
         }
@@ -646,32 +882,39 @@ export default function LearnersManagement({
         }
         >
 
-        <Trash2 />
+          <Trash2/>
 
         </button>
 
 
-        </div>
-
 
         </div>
 
 
-      ))}
+        </div>
+
+
+      ))
+
+      }
 
 
       </div>
 
 
-      {loading && (
-        <p>
-          Importing file...
-        </p>
-      )}
+
+
+
+      {
+      loading &&
+      <p>
+        Importing file...
+      </p>
+      }
 
 
     </div>
-
-  );
+      );
 
 }
+

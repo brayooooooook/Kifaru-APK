@@ -67,7 +67,7 @@ export default function Exports({
     }
 
 
-    const rankedStudents =
+    const ranked =
       calculateMeritList(
         learners,
         marks
@@ -75,14 +75,14 @@ export default function Exports({
 
 
     const data =
-      rankedStudents.map(student => {
+      ranked.map(student => {
 
-        const row: Record<string, any> = {
+        const row: any = {
 
           "Position":
             student.position,
 
-          "Full Name":
+          "Name":
             student.name,
 
           "Total Marks":
@@ -141,8 +141,8 @@ export default function Exports({
 
 
 
-
   const handleDownloadBackup = () => {
+
 
     const backup = {
 
@@ -171,7 +171,7 @@ export default function Exports({
         ],
         {
           type:
-          "application/json"
+            "application/json"
         }
       );
 
@@ -206,10 +206,11 @@ export default function Exports({
 
 
 
+  const handleImportBackup =
+    (
+      e: React.ChangeEvent<HTMLInputElement>
+    ) => {
 
-  const handleImportBackup = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
 
     const file =
       e.target.files?.[0];
@@ -218,34 +219,43 @@ export default function Exports({
     if (!file) return;
 
 
+    setImportingJson(true);
+
+
+
     const reader =
       new FileReader();
+
 
 
     reader.onload = () => {
 
       try {
 
+
         JSON.parse(
           reader.result as string
         );
 
 
-        setImportingJson(false);
-
-
         onAlert(
-          "Backup file loaded",
+          "Backup file loaded successfully",
           "success"
         );
 
 
       } catch {
 
+
         onAlert(
           "Invalid backup file",
           "error"
         );
+
+
+      } finally {
+
+        setImportingJson(false);
 
       }
 
@@ -258,13 +268,12 @@ export default function Exports({
 
 
 
-
   return (
 
     <div className="space-y-6">
 
 
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+      <h2 className="text-2xl font-bold flex gap-2 items-center">
 
         <Download />
 
@@ -275,6 +284,7 @@ export default function Exports({
 
 
       <div className="grid md:grid-cols-2 gap-6">
+
 
 
         <div className="p-5 border rounded-xl">
@@ -353,6 +363,7 @@ export default function Exports({
 
 
 
+
           <input
 
             hidden
@@ -375,10 +386,11 @@ export default function Exports({
               fileInputRef.current?.click()
             }
 
+            disabled={importingJson}
+
             className="mt-3 w-full p-3 bg-slate-100 rounded-lg flex gap-2"
 
           >
-
 
             {importingJson && (
 
@@ -387,14 +399,16 @@ export default function Exports({
             )}
 
 
-            Restore Backup
-
+            {importingJson
+              ? "Restoring..."
+              : "Restore Backup"}
 
           </button>
 
 
 
         </div>
+
 
 
       </div>

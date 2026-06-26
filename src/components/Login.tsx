@@ -5,14 +5,13 @@
 
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Lock, GraduationCap, ChevronRight, AlertCircle, Sparkles } from "lucide-react";
-
+import { Lock, GraduationCap, ChevronRight, AlertCircle } from "lucide-react";
 interface LoginProps {
   onLoginSuccess: (token: string, config: any, user: any) => void;
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  const [username, setUsername] = useState("admin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,9 +31,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const data = await response.json();
+      let data: any = {};
+
+try {
+  data = await response.json();
+} catch {
+  throw new Error("Invalid server response");
+}
       if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+  throw new Error(data.error || "Login failed");
       }
       onLoginSuccess(data.token, data.config, data.user);
     } catch (err: any) {
@@ -125,10 +130,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-gray-200 focus:border-[#1b365d] focus:ring-1 focus:ring-[#1b365d] rounded-lg text-slate-900 placeholder-slate-400 transition-colors duration-200 outline-none"
                 />
               </div>
-              <p className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-[#1b365d]" />
-                Tip: The default teacher password is <code className="bg-slate-100 px-1 py-0.5 rounded text-[#1b365d] font-mono font-bold">muchorwe8</code>
-              </p>
+              
             </div>
  
             {error && (

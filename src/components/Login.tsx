@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { Lock, GraduationCap, ChevronRight, AlertCircle } from "lucide-react";
+
 interface LoginProps {
   onLoginSuccess: (token: string, config: any, user: any) => void;
 }
@@ -31,17 +32,18 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+
       let data: any = {};
 
-    try {
-      data = await response.json();
-    } catch {
-     throw new Error("Invalid server response");
-    }
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
 
-    if (!response.ok) {
-      throw new Error(data.error || "Login failed");
-    }
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
 
       onLoginSuccess(data.token, data.config, data.user);
     } catch (err: any) {
@@ -55,7 +57,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Decorative clean minimalist grid pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40" />
-      
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -67,7 +69,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <GraduationCap className="h-10 w-10 text-white" />
           </div>
         </motion.div>
- 
+
         <motion.div
           initial={{ y: 15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -85,7 +87,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </p>
         </motion.div>
       </div>
- 
+
       <motion.div
         initial={{ y: 25, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -95,9 +97,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-gray-200">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label
-                className="block text-sm font-medium text-slate-700 mb-1.5"
-              >
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Username
               </label>
               <div className="relative rounded-lg">
@@ -132,9 +132,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-gray-200 focus:border-[#1b365d] focus:ring-1 focus:ring-[#1b365d] rounded-lg text-slate-900 placeholder-slate-400 transition-colors duration-200 outline-none"
                 />
               </div>
-              
             </div>
- 
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -145,7 +144,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 <span>{error}</span>
               </motion.div>
             )}
- 
+
             <div>
               <button
                 id="btn-login-submit"
@@ -159,7 +158,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </div>
           </form>
         </div>
- 
+
         <p className="mt-8 text-center text-xs text-slate-400">
           Authorized class teacher access only. Mr. Brian Ayiecha, Class Teacher.
         </p>

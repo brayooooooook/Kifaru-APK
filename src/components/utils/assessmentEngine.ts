@@ -6,6 +6,7 @@
 import type { Learner, AssessmentMarks } from "../types";
 import { SUBJECTS } from "../types";
 
+
 export interface RankedLearner {
   id: string;
   name: string;
@@ -14,8 +15,9 @@ export interface RankedLearner {
   position: number;
 }
 
+
 /**
- * Converts raw marks into safe curriculum values.
+ * Converts any mark input into a safe number.
  */
 function normalizeMarkPolicy(raw: unknown): number {
   const value = Number(raw);
@@ -27,24 +29,34 @@ function normalizeMarkPolicy(raw: unknown): number {
   return Math.max(0, value);
 }
 
+
 /**
- * Handles learner name sorting consistently.
+ * Sorts learner names consistently.
  */
-function compareLearnerNames(a: string, b: string): number {
-  return a.localeCompare(b, "en", {
-    sensitivity: "base",
-  });
+function compareLearnerNames(
+  a: string,
+  b: string
+): number {
+  return a.localeCompare(
+    b,
+    "en",
+    { sensitivity: "base" }
+  );
 }
+
 
 /**
  * Keeps totals accurate to two decimal places.
  */
-function roundToCurriculumPrecision(total: number): number {
+function roundToCurriculumPrecision(
+  total: number
+): number {
   return Math.round(total * 100) / 100;
 }
 
+
 /**
- * Extracts and cleans marks for one learner.
+ * Gets clean marks for one learner.
  */
 function extractLearnerMarks(
   marks: AssessmentMarks,
@@ -54,9 +66,12 @@ function extractLearnerMarks(
   const normalized: Record<string, number> = {};
 
   for (const subject of SUBJECTS) {
-    normalized[subject.code] = normalizeMarkPolicy(
-      marks[learnerId]?.[subject.code]
-    );
+
+    normalized[subject.code] =
+      normalizeMarkPolicy(
+        marks[learnerId]?.[subject.code]
+      );
+
   }
 
   return normalized;
@@ -64,76 +79,97 @@ function extractLearnerMarks(
 
 
 /**
- * Calculates totals and positions.
+ * Calculates totals and rankings.
  */
 export function calculateMeritList(
   learners: Learner[],
   marks: AssessmentMarks
 ): RankedLearner[] {
 
+
   if (!learners.length) {
     return [];
   }
 
 
-  const compiled = learners.map((learner) => {
-
-    const studentMarks = extractLearnerMarks(
-      marks,
-      learner.id
+  const uniqueLearners =
+    Array.from(
+      new Map(
+        learners.map(
+          learner => [learner.id, learner]
+        )
+      ).values()
     );
 
 
-    const rawTotal = SUBJECTS.reduce(
-      (sum, subject) =>
-        sum + (studentMarks[subject.code] ?? 0),
-      0
-    );
+  const compiled = uniqueLearners.map(
+    learner => {
+
+      const studentMarks =
+        extractLearnerMarks(
+          marks,
+          learner.id
+        );
 
 
-    return {
-      id: learner.id,
-      name: learner.name,
-      scores: studentMarks,
-      total: roundToCurriculumPrecision(rawTotal),
-      position: 1,
-    };
-  });
+      const total =
+        SUBJECTS.reduce(
+          (sum, subject) =>
+            sum + studentMarks[subject.code],
+          0
+        );
 
 
+      return {
+        id: learner.id,
+        name: learner.name,
+        scores: studentMarks,
+        total:
+          roundToCurriculumPrecision(total),
+        position: 1
+      };
 
-  const sorted = [...compiled].sort((a, b) => {
-
-    if (a.total !== b.total) {
-      return b.total - a.total;
     }
+  );
 
-    return compareLearnerNames(
-      a.name,
-      b.name
+
+  const sorted =
+    [...compiled].sort(
+      (a, b) => {
+
+        if (a.total !== b.total) {
+          return b.total - a.total;
+        }
+
+        return compareLearnerNames(
+          a.name,
+          b.name
+        );
+
+      }
     );
-
-  });
-
 
 
   let currentRank = 1;
 
 
-  return sorted.map((item, index) => {
+  return sorted.map(
+    (student, index) => {
 
-    if (
-      index > 0 &&
-      sorted[index - 1].total > item.total
-    ) {
-      currentRank = index + 1;
+      if (
+        index > 0 &&
+        sorted[index - 1].total >
+        student.total
+      ) {
+        currentRank = index + 1;
+      }
+
+
+      return {
+        ...student,
+        position: currentRank
+      };
+
     }
-
-
-    return {
-      ...item,
-      position: currentRank,
-    };
-
-  });
-                    }
+  );
+}

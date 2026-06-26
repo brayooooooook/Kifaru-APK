@@ -2,9 +2,8 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import { calculateMeritList } from "../utils/assessmentEngine";
 
-import type { Learner, AssessmentMarks } from "../types";
-import { SUBJECTS } from "../types";
 
 export interface RankedLearner {
   id: string;
@@ -18,7 +17,7 @@ export interface RankedLearner {
  * BUSINESS POLICY: Normalises raw input into valid curriculum marks.
  * Separates data parsing from school evaluation rules.
  */
-function normalizeMarkPolicy(raw: unknown): number {
+
   const value = Number(raw);
 
   if (!Number.isFinite(value)) return 0;
@@ -31,7 +30,7 @@ function normalizeMarkPolicy(raw: unknown): number {
  * NAME SORT POLICY: Compares learner names deterministically.
  * Ensures consistent ordering when learners have identical totals.
  */
-function compareLearnerNames(a: string, b: string): number {
+
   return a.localeCompare(b, "en", { sensitivity: "base" });
 }
 
@@ -39,14 +38,14 @@ function compareLearnerNames(a: string, b: string): number {
  * CURRICULUM ROUNDING POLICY: Standardises decimal totals.
  * Prevents floating-point precision drift during ranking.
  */
-function roundToCurriculumPrecision(total: number): number {
+
   return Math.round(total * 100) / 100;
 }
 
 /**
  * Private helper that creates a safe normalised subject score object.
  */
-function extractLearnerMarks(
+
   marks: AssessmentMarks,
   learnerId: string
 ): Record<string, number> {

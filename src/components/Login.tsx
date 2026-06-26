@@ -33,17 +33,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       });
       let data: any = {};
 
-try {
-  data = await response.json();
-} catch {
-  throw new Error("Invalid server response");
-}
+    try {
+      data = await response.json();
+    } catch {
+     throw new Error("Invalid server response");
+    }
 
-if (!response.ok) {
-  throw new Error(data.error || "Login failed");
-}
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed");
+    }
 
-onLoginSuccess(data.token, data.config, data.user);
       onLoginSuccess(data.token, data.config, data.user);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");

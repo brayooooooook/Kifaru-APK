@@ -20,6 +20,14 @@ interface DashboardProps {
   config: AssessmentConfig;
 }
 
+// Semantic style definitions independent of log data arrays
+const LOG_VARIANTS: Record<string, string> = {
+  blue: "border-[#1b365d] dark:border-blue-500 bg-[#f0f4f8] dark:bg-slate-800 text-[#1b365d] dark:text-blue-400",
+  emerald: "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400",
+  purple: "border-purple-500 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400",
+  amber: "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+};
+
 export default function Dashboard({
   learners,
   marks,
@@ -27,7 +35,8 @@ export default function Dashboard({
   setActiveTab,
   config
 }: DashboardProps) {
-  // 1. Calculate statistics
+  
+  // 1. Core Analytics Reduction Engine
   const { topLearner, classMean, highestScore, lowestScore, reportsGeneratedCount } = useMemo(() => {
     if (learners.length === 0) {
       return {
@@ -40,9 +49,9 @@ export default function Dashboard({
     }
 
     const learnersWithTotals = learners.map((l) => {
-      // Temporary assertion until we type getFinalTermMarksLocal return signature directly in MeritList
-      const studentMarks = getFinalTermMarksLocal(config, marks, l.id) as Record<string, number>;
-      const subScores = SUBJECTS.map((sub) => studentMarks[sub.code] || 0);
+      // Clean function execution without aggressive type casting definitions
+      const studentMarks = getFinalTermMarksLocal(config, marks, l.id);
+      const subScores = SUBJECTS.map((sub) => Number(studentMarks[sub.code] ?? 0));
       const total = subScores.reduce((a, b) => a + b, 0);
       const average = total / SUBJECTS.length;
       return {
@@ -55,7 +64,7 @@ export default function Dashboard({
 
     const sorted = [...learnersWithTotals].sort((a, b) => b.total - a.total);
 
-    // Apply Standard Competitive Ranking
+    // Apply Standard Competitive Ranking (1, 1, 3, 4...)
     let currentRank = 1;
     const sortedWithRanks = sorted.map((item, idx) => {
       if (idx > 0 && item.total < sorted[idx - 1].total) {
@@ -73,7 +82,7 @@ export default function Dashboard({
     const lowestScore = sortedWithRanks.length > 0 ? sortedWithRanks[sortedWithRanks.length - 1].total : 0;
 
     const topLearner = sortedWithRanks.length > 0 
-      ? { name: sortedWithRanks[0].name, total: sortedWithRanks[0].total, position: 1 }
+      ? { name: sortedWithRanks[0].name, total: sortedWithRanks[0].total, position: sortedWithRanks[0].position }
       : { name: "N/A", total: 0, position: 1 };
 
     const reportsGeneratedCount = Object.keys(remarks).filter(key => remarks[key] && remarks[key].trim().length > 0).length;
@@ -87,7 +96,7 @@ export default function Dashboard({
     };
   }, [learners, marks, remarks, config]);
 
-  // Read logs from local storage safely checking browser context with an unmutable ReadonlyArray
+  // 2. Operational Trail Logs (Unmutable and linked to data hooks/states)
   const logs = useMemo<ReadonlyArray<ActivityLog>>(() => {
     const isBrowser = typeof window !== "undefined";
     const defaultDate = new Date();
@@ -99,12 +108,12 @@ export default function Dashboard({
     const lastExport = (isBrowser && localStorage.getItem("last_export_completed")) ?? "Yesterday, 05:15 PM";
 
     return [
-      { id: "marks", label: "Last marks entry completed", time: lastMarks, color: "border-[#1b365d] dark:border-blue-500 bg-[#f0f4f8] dark:bg-slate-800 text-[#1b365d] dark:text-blue-400" },
-      { id: "merit", label: "Last merit list compiled & ranked", time: lastMerit, color: "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" },
-      { id: "reports", label: "Last report forms comments synchronized", time: lastReports, color: "border-purple-500 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400" },
-      { id: "export", label: "Last CSV/Google Sheets backup exported", time: lastExport, color: "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" }
+      { id: "marks", label: "Last marks entry completed", time: lastMarks, color: "blue" },
+      { id: "merit", label: "Last merit list compiled & ranked", time: lastMerit, color: "emerald" },
+      { id: "reports", label: "Last report forms comments synchronized", time: lastReports, color: "purple" },
+      { id: "export", label: "Last CSV/Google Sheets backup exported", time: lastExport, color: "amber" }
     ];
-  }, []);
+  }, [remarks, marks]);
 
   return (
     <div className="space-y-8 bg-white dark:bg-slate-950 text-black dark:text-white min-h-screen">
@@ -219,7 +228,7 @@ export default function Dashboard({
               </div>
               <div>
                 <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider block">Position</span>
-                <span className="text-lg font-bold text-gray-950 dark:text-white">Rank #1</span>
+                <span className="text-lg font-bold text-gray-950 dark:text-white">Rank #{topLearner.position}</span>
               </div>
             </div>
           </div>
@@ -255,7 +264,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* School Information */}
+        {/* School Information Layout */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-5 col-span-1 flex flex-col justify-between shadow-xs">
           <div className="space-y-2">
             <span className="text-[10px] font-bold text-[#1b365d] dark:text-blue-400 uppercase tracking-widest block">Class Identification</span>
@@ -355,14 +364,14 @@ export default function Dashboard({
           {logs.map((log) => (
             <div key={log.id} className="p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className={`w-1.5 h-8 rounded-full border-l-2 shrink-0 ${log.color.split(" ")[0]}`} />
+                <span className={`w-1.5 h-8 rounded-full border-l-2 shrink-0 ${LOG_VARIANTS[log.color].split(" ")[0]}`} />
                 <div>
                   <p className="text-xs font-semibold text-gray-800 dark:text-slate-200">{log.label}</p>
                   <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">System recorded status</p>
                 </div>
               </div>
               <div className="text-right">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${log.color.split(" ").slice(1).join(" ")}`}>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${LOG_VARIANTS[log.color].split(" ").slice(1).join(" ")}`}>
                   {log.time}
                 </span>
               </div>
@@ -373,4 +382,3 @@ export default function Dashboard({
     </div>
   );
 }
-                    

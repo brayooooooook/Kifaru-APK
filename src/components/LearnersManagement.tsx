@@ -3,11 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, {
-  useMemo,
-  useState
-} from "react";
-
+import React, { useMemo, useState } from "react";
 import type { Learner } from "../types";
 
 import {
@@ -51,39 +47,35 @@ export default function LearnersManagement({
 
 
 
-  const [name,setName] =
+  const [name, setName] =
     useState("");
 
-  const [admissionNumber,setAdmissionNumber] =
+  const [admissionNumber, setAdmissionNumber] =
     useState("");
 
-  const [parentPhone,setParentPhone] =
+  const [parentPhone, setParentPhone] =
+    useState("");
+
+  const [search, setSearch] =
     useState("");
 
 
 
-  const [search,setSearch] =
-    useState("");
-
-
-
-  const [editingId,setEditingId] =
+  const [editingId, setEditingId] =
     useState<string | null>(null);
 
 
-
-  const [editName,setEditName] =
+  const [editName, setEditName] =
     useState("");
 
-  const [editAdmission,setEditAdmission] =
+  const [editAdmission, setEditAdmission] =
     useState("");
 
-  const [editPhone,setEditPhone] =
+  const [editPhone, setEditPhone] =
     useState("");
 
 
-
-  const [loading,setLoading] =
+  const [loading, setLoading] =
     useState(false);
 
 
@@ -91,7 +83,7 @@ export default function LearnersManagement({
 
   const headers = {
 
-    "Content-Type":"application/json",
+    "Content-Type": "application/json",
 
     Authorization:
       `Bearer ${token}`
@@ -101,11 +93,12 @@ export default function LearnersManagement({
 
 
 
+
   const filteredLearners =
     useMemo(()=>{
 
-
       return learners.filter(
+
         learner =>
 
         learner.name
@@ -124,8 +117,8 @@ export default function LearnersManagement({
 
       );
 
-
     },[learners,search]);
+
 
 
 
@@ -174,6 +167,7 @@ export default function LearnersManagement({
 
 
       if(!response.ok)
+
         throw new Error(
           "Failed to add learner"
         );
@@ -184,6 +178,7 @@ export default function LearnersManagement({
         "Learner added successfully",
         "success"
       );
+
 
 
       setName("");
@@ -205,9 +200,7 @@ export default function LearnersManagement({
 
     }
 
-
   };
-
 
 
 
@@ -248,7 +241,6 @@ export default function LearnersManagement({
 
 
 
-
   const cancelEdit =
   ()=>{
 
@@ -268,12 +260,8 @@ export default function LearnersManagement({
 
 
 
-
-
   const saveEdit =
-  async(
-    id:string
-  )=>{
+  async(id:string)=>{
 
 
     try{
@@ -305,6 +293,7 @@ export default function LearnersManagement({
 
 
       if(!response.ok)
+
         throw new Error(
           "Update failed"
         );
@@ -332,21 +321,9 @@ export default function LearnersManagement({
 
     }
 
-
   };
-
-
-
-
-
-
-
-
-
-  const deleteLearner =
-  async(
-    id:string
-  )=>{
+    const deleteLearner =
+  async(id:string)=>{
 
 
     if(
@@ -355,7 +332,6 @@ export default function LearnersManagement({
       )
     )
       return;
-
 
 
 
@@ -379,6 +355,7 @@ export default function LearnersManagement({
 
 
       if(!response.ok)
+
         throw new Error(
           "Delete failed"
         );
@@ -404,7 +381,6 @@ export default function LearnersManagement({
 
     }
 
-
   };
 
 
@@ -422,9 +398,9 @@ export default function LearnersManagement({
     setLoading(true);
 
 
-
     const reader =
     new FileReader();
+
 
 
 
@@ -439,9 +415,24 @@ export default function LearnersManagement({
         XLSX.read(
           event.target?.result,
           {
-            type:"binary"
+            type:"array"
           }
         );
+
+
+
+        // Safety Guard 1
+        if(
+          !workbook.SheetNames ||
+          !workbook.SheetNames.length
+        ){
+
+          throw new Error(
+            "No worksheet found in file"
+          );
+
+        }
+
 
 
 
@@ -459,8 +450,10 @@ export default function LearnersManagement({
 
 
 
+
         const imported =
-        rows.map(row=>{
+        rows
+        .map(row=>{
 
 
           const keys =
@@ -471,12 +464,17 @@ export default function LearnersManagement({
           const nameKey =
           keys.find(
             key =>
+
             key.toLowerCase()
             .includes("name")
+
             ||
+
             key.toLowerCase()
             .includes("learner")
+
             ||
+
             key.toLowerCase()
             .includes("student")
           );
@@ -486,9 +484,12 @@ export default function LearnersManagement({
           const admissionKey =
           keys.find(
             key =>
+
             key.toLowerCase()
             .includes("adm")
+
             ||
+
             key.toLowerCase()
             .includes("number")
           );
@@ -498,12 +499,16 @@ export default function LearnersManagement({
           const phoneKey =
           keys.find(
             key =>
+
             key.toLowerCase()
             .includes("phone")
+
             ||
+
             key.toLowerCase()
             .includes("contact")
           );
+
 
 
 
@@ -516,11 +521,13 @@ export default function LearnersManagement({
             ).trim(),
 
 
+
             admissionNumber:
             String(
               row[admissionKey || ""]
               || ""
             ).trim(),
+
 
 
             parentPhone:
@@ -533,10 +540,91 @@ export default function LearnersManagement({
 
 
         })
+
         .filter(
           item =>
           item.name
         );
+
+
+
+
+
+        if(!imported.length){
+
+          throw new Error(
+            "No valid learners found in file"
+          );
+
+        }
+
+
+
+
+
+
+        const uniqueLearners =
+        imported.filter(
+          (
+            learner,
+            index,
+            self
+          )=>{
+
+
+            if(!learner.admissionNumber){
+
+              return true;
+
+            }
+
+
+
+            return (
+
+              index ===
+
+              self.findIndex(
+                item =>
+                item.admissionNumber ===
+                learner.admissionNumber
+              )
+
+            );
+
+
+          }
+
+        );
+
+
+
+
+
+
+        if(
+          uniqueLearners.length > 1000
+        ){
+
+          throw new Error(
+            "Too many learners in one import (maximum 1000)"
+          );
+
+        }
+
+
+
+
+
+        if(
+          !uniqueLearners.length
+        ){
+
+          throw new Error(
+            "No valid learners available after cleaning"
+          );
+
+        }
 
 
 
@@ -552,7 +640,10 @@ export default function LearnersManagement({
             headers,
 
             body:JSON.stringify({
-              learners:imported
+
+              learners:
+              uniqueLearners
+
             })
 
           });
@@ -560,16 +651,19 @@ export default function LearnersManagement({
 
 
         if(!response.ok)
+
           throw new Error(
             "Import failed"
           );
 
 
 
+
         onAlert(
-          `${imported.length} learners imported`,
+          `${uniqueLearners.length} unique learners imported`,
           "success"
         );
+
 
 
         onRefresh();
@@ -577,6 +671,7 @@ export default function LearnersManagement({
 
 
       }catch(error:any){
+
 
         onAlert(
           error.message,
@@ -597,10 +692,13 @@ export default function LearnersManagement({
 
 
 
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
 
 
   };
+
+
+
 
 
 
@@ -612,7 +710,6 @@ export default function LearnersManagement({
     <div className="space-y-6">
 
 
-
       <h2 className="text-2xl font-bold">
         Learners Management
       </h2>
@@ -621,9 +718,13 @@ export default function LearnersManagement({
 
 
 
+
       <form
+
       onSubmit={handleAdd}
+
       className="bg-white p-5 rounded-xl border space-y-3"
+
       >
 
 
@@ -637,45 +738,74 @@ export default function LearnersManagement({
 
 
 
+
+
         <input
+
         className="border p-2 rounded w-full"
+
         placeholder="Learner name"
+
         value={name}
+
         onChange={
-          e=>setName(e.target.value)
+          e=>setName(
+            e.target.value
+          )
         }
+
         />
 
 
 
+
+
         <input
+
         className="border p-2 rounded w-full"
+
         placeholder="Admission number"
+
         value={admissionNumber}
+
         onChange={
           e=>setAdmissionNumber(
             e.target.value
           )
         }
+
         />
 
 
 
+
+
         <input
+
         className="border p-2 rounded w-full"
+
         placeholder="Parent phone"
+
         value={parentPhone}
+
         onChange={
           e=>setParentPhone(
             e.target.value
           )
         }
+
         />
 
 
 
+
+
         <button
+
+        type="submit"
+
         className="bg-[#1b365d] text-white p-2 rounded w-full"
+
         >
 
           Add Learner
@@ -689,47 +819,70 @@ export default function LearnersManagement({
 
 
 
-
-
       <div className="flex gap-3 items-center">
 
 
         <Search/>
 
 
+
+
         <input
+
         className="border p-2 rounded flex-1"
+
         placeholder="Search learner"
+
+        value={search}
+
         onChange={
           e=>setSearch(
             e.target.value
           )
         }
+
         />
 
 
 
-        <label className="cursor-pointer">
+
+
+        <label className="cursor-pointer flex items-center">
+
 
           <Upload/>
 
 
+
+
           <input
+
           hidden
+
           type="file"
+
           accept=".xlsx,.csv"
+
           onChange={
             e=>{
 
               const file =
               e.target.files?.[0];
 
+
               if(file)
                 importExcel(file);
 
+
+
+              e.target.value="";
+
             }
+
           }
+
           />
+
 
         </label>
 
@@ -740,158 +893,201 @@ export default function LearnersManagement({
 
 
 
-
-
-
       <div className="bg-white rounded-xl border overflow-hidden">
 
 
-      {filteredLearners.map(
+      {
+      filteredLearners.map(
       (learner,index)=>(
 
 
-        <div
-        key={learner.id}
-        className="p-4 border-b flex justify-between"
-        >
+      <div
+
+      key={learner.id}
+
+      className="p-4 border-b flex justify-between items-center"
+
+      >
 
 
 
-        <div>
+      <div>
 
 
-        {
-        editingId===learner.id ?
-
-
-        <div className="space-y-2">
-
-
-          <input
-          className="border p-1"
-          value={editName}
-          onChange={
-            e=>setEditName(
-              e.target.value
-            )
-          }
-          />
-
-
-          <input
-          className="border p-1"
-          value={editAdmission}
-          onChange={
-            e=>setEditAdmission(
-              e.target.value
-            )
-          }
-          />
-
-
-          <input
-          className="border p-1"
-          value={editPhone}
-          onChange={
-            e=>setEditPhone(
-              e.target.value
-            )
-          }
-          />
-
-
-        </div>
-
-
-        :
-
-
-        <p className="font-semibold">
-
-          {index+1}. {learner.name}
-
-        </p>
-
-        }
-
-
-        </div>
+      {
+      editingId===learner.id ?
 
 
 
+      <div className="space-y-2">
+
+
+      <input
+
+      className="border p-1 block"
+
+      value={editName}
+
+      onChange={
+        e=>setEditName(
+          e.target.value
+        )
+      }
+
+      />
 
 
 
-        <div className="flex gap-2">
+      <input
 
+      className="border p-1 block"
 
-        {
-        editingId===learner.id ?
+      value={editAdmission}
 
+      onChange={
+        e=>setEditAdmission(
+          e.target.value
+        )
+      }
 
-        <button
-        onClick={()=>
-          saveEdit(
-            learner.id
-          )
-        }
-        >
-
-          <Check/>
-
-        </button>
-
-
-        :
-
-
-        <button
-        onClick={()=>
-          startEdit(learner)
-        }
-        >
-
-          <Edit2/>
-
-        </button>
-
-        }
+      />
 
 
 
-        {
-        editingId===learner.id &&
+      <input
 
-        <button
-        onClick={cancelEdit}
-        >
+      className="border p-1 block"
 
-          <X/>
+      value={editPhone}
 
-        </button>
+      onChange={
+        e=>setEditPhone(
+          e.target.value
+        )
+      }
 
-        }
-
-
-
-        <button
-        onClick={()=>
-          deleteLearner(
-            learner.id
-          )
-        }
-        >
-
-          <Trash2/>
-
-        </button>
+      />
 
 
 
-        </div>
+      </div>
 
 
-        </div>
+
+      :
+
+
+
+      <p className="font-semibold">
+
+      {index+1}. {learner.name}
+
+      </p>
+
+
+      }
+
+
+
+      </div>
+
+
+
+
+
+
+
+      <div className="flex gap-2">
+
+
+      {
+      editingId===learner.id ?
+
+
+      <button
+
+      type="button"
+
+      onClick={
+        ()=>saveEdit(
+          learner.id
+        )
+      }
+
+      >
+
+      <Check/>
+
+      </button>
+
+
+      :
+
+
+      <button
+
+      type="button"
+
+      onClick={
+        ()=>startEdit(learner)
+      }
+
+      >
+
+      <Edit2/>
+
+      </button>
+
+      }
+
+
+
+
+
+      {
+      editingId===learner.id &&
+
+      <button
+
+      type="button"
+
+      onClick={cancelEdit}
+
+      >
+
+      <X/>
+
+      </button>
+
+      }
+
+
+
+
+      <button
+
+      type="button"
+
+      onClick={
+        ()=>deleteLearner(
+          learner.id
+        )
+      }
+
+      >
+
+      <Trash2/>
+
+      </button>
+
+
+
+
+      </div>
+
+
+
+      </div>
 
 
       ))
@@ -907,14 +1103,18 @@ export default function LearnersManagement({
 
       {
       loading &&
-      <p>
+
+      <p className="text-gray-500 animate-pulse">
+
         Importing file...
+
       </p>
+
       }
 
 
+
     </div>
-      );
 
+  );
 }
-

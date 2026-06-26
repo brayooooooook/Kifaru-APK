@@ -19,3 +19,43 @@
     color: #0f172a;
   }
 }
+
+/* Custom CSS to optimize printable reports on A4 paper */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+}
+
+/* Standard baseline dark mode styles for smooth backgrounds and default text colors */
+.dark body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}

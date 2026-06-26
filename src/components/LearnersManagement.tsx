@@ -583,15 +583,15 @@ export default function LearnersManagement({
 
             return (
 
-              index ===
+  index ===
 
-              self.findIndex(
-                item =>
-                item.admissionNumber ===
-                learner.admissionNumber
-              )
+  self.findIndex(
+    item =>
+    item.admissionNumber.trim() ===
+    learner.admissionNumber.trim()
+  )
 
-            );
+);
 
 
           }

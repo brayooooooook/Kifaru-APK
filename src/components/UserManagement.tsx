@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit2, Key, UserX, UserCheck, Shield, Trash2 } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Edit2,
+  UserX,
+  UserCheck,
+  Trash2
+} from "lucide-react";
 
 interface User {
   id: string;
@@ -124,7 +131,7 @@ useEffect(() => {
   };
 
   const handleDelete = async (user: User) => {
-    if (user.username === "admin" || user.username?.toLowerCase() === "admin") {
+    if (user.username.toLowerCase() === "admin") {
       onAlert("The administrator account cannot be deleted or modified.", "error");
       return;
     }

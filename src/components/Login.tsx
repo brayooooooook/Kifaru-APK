@@ -36,9 +36,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const data = await response.json();
 console.log("LOGIN RESPONSE:", data);
 
-if (!response.ok) {
+ if (!response.ok) {
   throw new Error(data.message || data.error || "Login failed");
-}
+ }
 
   onLoginSuccess(data.token, data.config, data.user);
 
@@ -46,8 +46,8 @@ if (!response.ok) {
   setError(err.message || "Something went wrong. Please try again.");
 } finally {
   setLoading(false);
-    }
-  };
+}
+}
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

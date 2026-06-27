@@ -21,20 +21,7 @@ export type SubjectCode =
   | "CRE" 
   | "AGR";
 
-export interface SubjectInfo {
-  code: SubjectCode;
-  name: string;
-}
-
-  { code: "ENG", name: "English Language" },
-  { code: "KIS", name: "Kiswahili" },
-  { code: "MAT", name: "Mathematics" },
-  { code: "SCI", name: "Integrated Science" },
-  { code: "PTS", name: "Pre-Technical Studies" },
-  { code: "CAS", name: "Creative Arts and Sports" },
-  { code: "AGR", name: "Agriculture" },
-  { code: "SST", name: "Social Studies" },
-  { code: "CRE", name: "Christian Religious Education" }
+export interface SubjectInfo { code: SubjectCode; name: string; } export const SUBJECTS: SubjectInfo[] = [ { code: "ENG", name: "English Language" }, { code: "KIS", name: "Kiswahili" }, { code: "MAT", name: "Mathematics" }, { code: "SCI", name: "Integrated Science" }, { code: "PTS", name: "Pre-Technical Studies" }, { code: "CAS", name: "Creative Arts and Sports" }, { code: "AGR", name: "Agriculture" }, { code: "SST", name: "Social Studies" }, { code: "CRE", name: "Christian Religious Education" }, ]; 
 
 
 export interface CBEBandDetails {

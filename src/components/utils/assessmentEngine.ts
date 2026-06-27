@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Learner, AssessmentMarks } from "../types";
-import { SUBJECTS } from "../types";
+import type { Learner, AssessmentMarks } from "../../types";
+import { SUBJECTS } from "../../types";
 
 
 export interface RankedLearner {

@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo } from "react";
-import { calculateMeritList } from "../utils/assessmentEngine";
+import { calculateMeritList } from "./utils/assessmentEngine";
 import type { Learner, AssessmentMarks } from "../types";
 
 

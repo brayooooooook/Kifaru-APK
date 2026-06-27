@@ -45,7 +45,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
       const text = await response.text();
 
-      console.log("SERVER SENT THIS:", text);
+      alert("SERVER SENT THIS:\n" + text);
 
       let data: any = {};
 

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { getSystemData } from "./services/learnerService";
+import { getSystemData } from "./services/systemService";
 import { Learner } from "./types";
 import Login from "./components/Login";
 import LearnersManagement from "./components/LearnersManagement";

@@ -51,9 +51,22 @@ try {
   let data: any = {};
 
   try {
+  const response = await fetch("https://muchorwe-assessment-system.onrender.com/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const text = await response.text();
+
+  console.log("SERVER SENT THIS:", text);
+
+  let data: any = {};
+
+  try {
     data = JSON.parse(text);
   } catch {
-    throw new Error("Invalid server response: " + text);
+    throw new Error("Invalid server response: " + text.slice(0, 200));
   }
 
   console.log("LOGIN RESPONSE:", data);

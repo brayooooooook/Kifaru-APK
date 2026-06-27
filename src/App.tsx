@@ -115,8 +115,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchAllData();
+  if (token) {
+    getSystemData().then((data) => {
+      console.log(data);
+    });
       // Recover credentials config from local storage if available
       const savedConfig = localStorage.getItem("teacher_config");
       if (savedConfig) {

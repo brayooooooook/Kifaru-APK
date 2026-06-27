@@ -4,13 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "tsx server.ts",
-  "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-  "start": "node dist/server.cjs",
-  "clean": "rm -rf dist server.js",
-  "lint": "tsc --noEmit",
-  "test": "echo \"No tests defined\" && exit 0"
-  }
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit",
+    "test": "echo \"No tests defined\" && exit 0"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

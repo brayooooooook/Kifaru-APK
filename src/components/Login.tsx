@@ -33,12 +33,34 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     body: JSON.stringify({ username, password }),
   });
 
-  const data = await response.json();
-console.log("LOGIN RESPONSE:", data);
+  const text = await response.text();
 
- if (!response.ok) {
-  throw new Error(data.message || data.error || "Login failed");
- }
+console.log("RAW SERVER RESPONSE:", text);
+
+let data: any;
+
+try {
+  const response = await fetch("https://muchorwe-assessment-system.onrender.com/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const text = await response.text();
+
+  let data: any = {};
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Invalid server response: " + text);
+  }
+
+  console.log("LOGIN RESPONSE:", data);
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Login failed");
+  }
 
   onLoginSuccess(data.token, data.config, data.user);
 
@@ -47,7 +69,7 @@ console.log("LOGIN RESPONSE:", data);
 } finally {
   setLoading(false);
 }
-}
+};
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

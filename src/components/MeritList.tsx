@@ -7,6 +7,12 @@ import React, { useMemo } from "react";
 import { calculateMeritList } from "./utils/assessmentEngine";
 import type { Learner, AssessmentMarks } from "../types";
 
+export function getFinalTermMarksLocal(
+  marks: AssessmentMarks
+): AssessmentMarks {
+  return marks;
+}
+
 
 interface MeritListProps {
   learners: Learner[];

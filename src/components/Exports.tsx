@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useState } from "react";
-import { calculateMeritList } from "../utils/assessmentEngine";
+import { calculateMeritList } from "./utils/assessmentEngine";
 import { SUBJECTS } from "../types";
 import type { Learner, AssessmentMarks } from "../types";
 

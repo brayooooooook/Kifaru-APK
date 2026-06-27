@@ -34,11 +34,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   });
 
   const data = await response.json();
-  console.log(data);
+console.log("LOGIN RESPONSE:", data);
 
-  if (!response.ok) {
-    throw new Error(data.error || "Login failed");
-  }
+if (!response.ok) {
+  throw new Error(data.message || data.error || "Login failed");
+}
 
   onLoginSuccess(data.token, data.config, data.user);
 

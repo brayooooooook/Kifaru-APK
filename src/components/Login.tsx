@@ -82,7 +82,6 @@ try {
 } finally {
   setLoading(false);
 }
-};
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

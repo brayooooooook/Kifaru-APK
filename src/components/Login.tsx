@@ -51,37 +51,41 @@ try {
   let data: any = {};
 
   try {
-  const response = await fetch("https://muchorwe-assessment-system.onrender.com/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
+    const response = await fetch(
+      "https://muchorwe-assessment-system.onrender.com/api/auth/login",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      }
+    );
 
-  const text = await response.text();
+    const text = await response.text();
 
-  console.log("SERVER SENT THIS:", text);
+    console.log("SERVER SENT THIS:", text);
 
-  let data: any = {};
+    let data: any = {};
 
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error("Invalid server response: " + text.slice(0, 200));
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Invalid server response: " + text.slice(0, 200));
+    }
+
+    console.log("LOGIN RESPONSE:", data);
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || "Login failed");
+    }
+
+    onLoginSuccess(data.token, data.config, data.user);
+
+  } catch (err: any) {
+    setError(err.message || "Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
   }
-
-  console.log("LOGIN RESPONSE:", data);
-
-  if (!response.ok) {
-    throw new Error(data.message || data.error || "Login failed");
-  }
-
-  onLoginSuccess(data.token, data.config, data.user);
-
-} catch (err: any) {
-  setError(err.message || "Something went wrong. Please try again.");
-} finally {
-  setLoading(false);
-}
+};
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

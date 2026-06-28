@@ -7,7 +7,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Learner, SUBJECTS } from "../types";
 import { Save } from "lucide-react";
 import { db } from "../firebaseConfig";
-import { doc, setDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 
 interface AssessmentConfig {
   id: string;
@@ -15,9 +15,7 @@ interface AssessmentConfig {
   weight: number;
 }
 
-type LearnerMarks = Record<string, number>;
-type AssessmentMarks = Record<string, LearnerMarks>;
-type MarksData = Record<string, AssessmentMarks>;
+type MarksData = Record<string, Record<string, Record<string, number>>>;
 
 interface MarksEntryProps {
   learners: Learner[];
@@ -44,7 +42,7 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
     assessments.map(a => [a.id, a.weight / 100])
   ), [assessments]);
 
-  const parseScore = (val: number | string | null | undefined): number => {
+  const parseScore = (val: any): number => {
     if (val === undefined || val === null || val === "") return 0;
     const num = Number(val);
     return Number.isNaN(num) ? 0 : num;
@@ -78,60 +76,43 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
     setHasUnsavedChanges(false);
   }, [marks, learners, activeAssessmentId, assessments, weightMap]);
 
-  const handleSaveRow = async (learnerId: string) => {
-    setSavingId(learnerId);
-    try {
-      const rowData = localMarks[learnerId] || {};
-      const payloadMarks: Record<string, number> = {};
-      SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
-
-      await setDoc(doc(db, "marks", learnerId, "assessments", activeAssessmentId), {
-        learnerId,
-        assessmentId: activeAssessmentId,
-        subjectMarks: payloadMarks,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-
-      onAlert("Row saved.", "success");
-      onRefresh();
-    } catch (err: any) { onAlert(err.message, "error"); } finally { setSavingId(null); }
-  };
-
-  // Blocking Save Function: Wait for database confirmation before proceeding
   const handleSaveAll = async () => {
-    onAlert("Saving all marks to database...", "success");
+    if (Object.keys(localMarks).length === 0) {
+      onAlert("No marks data to save.", "error");
+      return;
+    }
+
+    onAlert("Committing marks to database...", "success");
     setSavingId("all");
 
     try {
-      const learnerIds = learners.map(l => l.id);
+      const batch = writeBatch(db);
       
-      for (let i = 0; i < learnerIds.length; i += 100) {
-        const batch = writeBatch(db);
-        const chunk = learnerIds.slice(i, i + 100);
+      learners.forEach(learner => {
+        const rowData = localMarks[learner.id] || {};
+        const payloadMarks: Record<string, number> = {};
         
-        chunk.forEach(learnerId => {
-          const rowData = localMarks[learnerId] || {};
-          const payloadMarks: Record<string, number> = {};
-          SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
-          
-          const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
-          batch.set(docRef, {
-            learnerId: learnerId,
-            assessmentId: activeAssessmentId,
-            subjectMarks: payloadMarks,
-            updatedAt: serverTimestamp(),
-          }, { merge: true });
+        SUBJECTS.forEach((sub) => { 
+          payloadMarks[sub.code] = parseScore(rowData[sub.code]); 
         });
+        
+        const docRef = doc(db, "marks", learner.id, "assessments", activeAssessmentId);
+        
+        batch.set(docRef, {
+          learnerId: learner.id,
+          assessmentId: activeAssessmentId,
+          subjectMarks: payloadMarks,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      });
 
-        // Await confirms the batch is successfully written to Firebase
-        await batch.commit();
-      }
-
-      onAlert("All marks saved successfully!", "success");
+      await batch.commit();
+      onAlert("Success! All class marks updated.", "success");
       setHasUnsavedChanges(false);
       onRefresh(); 
     } catch (err: any) { 
-      onAlert("Error saving marks: " + err.message, "error"); 
+      console.error("Save Error:", err);
+      onAlert("Save failed: " + err.message, "error"); 
     } finally { 
       setSavingId(null);
     }
@@ -171,7 +152,6 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
             <tr className="bg-slate-800 text-slate-300 uppercase text-[10px] tracking-wider">
               <th className="py-4 pl-4">Name</th>
               {SUBJECTS.map(s => <th key={s.code} className="text-center py-4">{s.code}</th>)}
-              <th className="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -191,15 +171,6 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
                     />
                   </td>
                 ))}
-                <td className="text-center">
-                  <button 
-                    disabled={activeAssessmentId === "terminal" || savingId === l.id} 
-                    onClick={() => handleSaveRow(l.id)}
-                    className="text-slate-400 hover:text-white"
-                  >
-                    {savingId === l.id ? "..." : <Save size={16} />}
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -209,9 +180,9 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
           <button 
             disabled={activeAssessmentId === "terminal" || savingId === "all"} 
             onClick={handleSaveAll}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+            className={`px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${hasUnsavedChanges ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
           >
-            {savingId === "all" ? "Saving All..." : "Save All Changes"}
+            {savingId === "all" ? "Saving..." : "Save All Changes"}
           </button>
         </div>
       </div>

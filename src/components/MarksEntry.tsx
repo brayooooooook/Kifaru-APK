@@ -98,40 +98,44 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
   };
 
   const handleSaveAll = async () => {
+    onAlert("Saving in background...", "success");
     setSavingId("all");
-    try {
-      const learnerIds = learners.map(l => l.id);
-      
-      // Process in chunks of 100 to keep the network requests snappy
-      for (let i = 0; i < learnerIds.length; i += 100) {
-        const batch = writeBatch(db);
-        const chunk = learnerIds.slice(i, i + 100);
+
+    // Non-blocking background process
+    (async () => {
+      try {
+        const learnerIds = learners.map(l => l.id);
         
-        chunk.forEach(learnerId => {
-          const rowData = localMarks[learnerId] || {};
-          const payloadMarks: Record<string, number> = {};
-          SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
+        for (let i = 0; i < learnerIds.length; i += 100) {
+          const batch = writeBatch(db);
+          const chunk = learnerIds.slice(i, i + 100);
           
-          const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
-          batch.set(docRef, {
-            learnerId: learnerId,
-            assessmentId: activeAssessmentId,
-            subjectMarks: payloadMarks,
-            updatedAt: serverTimestamp(),
-          }, { merge: true });
-        });
+          chunk.forEach(learnerId => {
+            const rowData = localMarks[learnerId] || {};
+            const payloadMarks: Record<string, number> = {};
+            SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
+            
+            const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
+            batch.set(docRef, {
+              learnerId: learnerId,
+              assessmentId: activeAssessmentId,
+              subjectMarks: payloadMarks,
+              updatedAt: serverTimestamp(),
+            }, { merge: true });
+          });
 
-        await batch.commit();
+          await batch.commit();
+        }
+
+        onAlert("All marks saved successfully!", "success");
+        setHasUnsavedChanges(false);
+        onRefresh();
+      } catch (err: any) { 
+        onAlert("Error saving marks: " + err.message, "error"); 
+      } finally { 
+        setSavingId(null);
       }
-
-      onAlert("All marks saved successfully!", "success");
-      setHasUnsavedChanges(false);
-      onRefresh();
-    } catch (err: any) { 
-      onAlert("Error saving marks: " + err.message, "error"); 
-    } finally { 
-      setSavingId(null); 
-    }
+    })();
   };
 
   return (

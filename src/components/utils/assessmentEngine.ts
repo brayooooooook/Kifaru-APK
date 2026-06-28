@@ -10,6 +10,7 @@ import { SUBJECTS } from "../../types";
 export interface RankedLearner {
   id: string;
   name: string;
+  admissionNumber: string;
   scores: Record<string, number>;
   total: number;
   position: number;
@@ -120,14 +121,14 @@ export function calculateMeritList(
         );
 
 
-      return {
-        id: learner.id,
-        name: learner.name,
-        scores: studentMarks,
-        total:
-          roundToCurriculumPrecision(total),
-        position: 1
-      };
+return {
+  id: learner.id,
+  name: learner.name,
+  admissionNumber: learner.admissionNumber,
+  scores: studentMarks,
+  total: roundToCurriculumPrecision(total),
+  position: 1
+};
 
     }
   );

@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from "react";
 import { Learner, SUBJECTS } from "../types";
-import { FileText, BookOpen, TrendingUp, Layers, FileDown } from "lucide-react";
+import { FileText, BookOpen, TrendingUp, Layers, FileDown, Sparkles } from "lucide-react";
 import { getFinalTermMarksLocal } from "./MeritList";
 import html2pdf from "html2pdf.js";
 
@@ -22,8 +22,8 @@ interface ReportFormsProps {
 export default function ReportForms({ learners, marks, remarks, config, onRefresh }: ReportFormsProps) {
   const [activeTab, setActiveTab] = useState<"individual" | "booklet" | "progress_tracker">("individual");
   const [activeAssessmentId, setActiveAssessmentId] = useState<string>("final");
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // Reconciled data calculation using the weighted terminal formula (20/30/50)
   const rankedLearners = useMemo(() => {
     return learners.map((l) => {
       let lMarks: Record<string, number> = {};
@@ -40,7 +40,6 @@ export default function ReportForms({ learners, marks, remarks, config, onRefres
     }).sort((a, b) => b.total - a.total).map((item, idx) => ({ ...item, position: idx + 1 }));
   }, [learners, marks, remarks, config, activeAssessmentId]);
 
-  // PDF Export Logic
   const downloadReportPDF = () => {
     const element = document.getElementById("report-card-container");
     const opt = {
@@ -53,10 +52,16 @@ export default function ReportForms({ learners, marks, remarks, config, onRefres
     html2pdf().set(opt).from(element).save();
   };
 
+  const handleAutoRemark = async (student: any) => {
+    setIsGenerating(true);
+    // Add your AI fetch logic here
+    console.log("Generating AI remark for:", student.name);
+    setIsGenerating(false);
+  };
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header & Tabs */}
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
           <h2 className="text-2xl font-extrabold text-slate-800">Report Forms Center</h2>
           <div className="flex bg-slate-200 p-1 rounded-xl">
@@ -76,7 +81,6 @@ export default function ReportForms({ learners, marks, remarks, config, onRefres
           </div>
         </div>
 
-        {/* Content Area */}
         <div id="report-card-container" className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           {rankedLearners.length > 0 ? (
             <div className="space-y-4">
@@ -86,13 +90,16 @@ export default function ReportForms({ learners, marks, remarks, config, onRefres
                   <FileDown size={16} /> Export PDF
                 </button>
               </div>
-              {/* Report Card content logic goes here */}
+              <div className="text-sm text-slate-600">
+                <p>Total Learners: {rankedLearners.length}</p>
+                {/* Individual/Booklet/Tracker Content goes here */}
+              </div>
             </div>
           ) : (
             <div className="py-20 text-center">
               <div className="text-slate-300 mb-4"><Layers size={48} className="mx-auto" /></div>
               <h3 className="text-lg font-bold text-slate-700">No Data Found</h3>
-              <p className="text-slate-500">Ensure learners and assessment marks are saved to generate reports.</p>
+              <p className="text-slate-500">Ensure learners and assessment marks are saved.</p>
               <button onClick={onRefresh} className="mt-6 px-6 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700">
                 Refresh Data
               </button>

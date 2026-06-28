@@ -5,11 +5,11 @@
 
 import React, { useMemo } from "react";
 import { calculateMeritList } from "./utils/assessmentEngine";
+import { SUBJECTS } from "../types"; // Import at top-level
 import type { Learner, AssessmentMarks, AssessmentConfig } from "../types";
 
 /**
- * Calculates weighted terminal marks for a specific student.
- * This is now the "source of truth" for terminal calculations.
+ * Calculates weighted terminal marks synchronously.
  */
 export function getFinalTermMarksLocal(
   config: { assessments?: AssessmentConfig[] },
@@ -30,20 +30,18 @@ export function getFinalTermMarksLocal(
 
   const weightedMarks: Record<string, number> = {};
 
-  // Assuming SUBJECTS is imported from "../types"
-  import("../types").then(({ SUBJECTS }) => {
-    SUBJECTS.forEach((sub) => {
-      const opener = parseScore(marks["opener"]?.[learnerId]?.[sub.code]);
-      const midterm = parseScore(marks["midterm"]?.[learnerId]?.[sub.code]);
-      const endterm = parseScore(marks["endterm"]?.[learnerId]?.[sub.code]);
+  // Now synchronous since SUBJECTS is imported above
+  SUBJECTS.forEach((sub) => {
+    const opener = parseScore(marks["opener"]?.[learnerId]?.[sub.code]);
+    const midterm = parseScore(marks["midterm"]?.[learnerId]?.[sub.code]);
+    const endterm = parseScore(marks["endterm"]?.[learnerId]?.[sub.code]);
 
-      const total = Math.round(
-        (opener * (weightMap.opener || 0)) +
-        (midterm * (weightMap.midterm || 0)) +
-        (endterm * (weightMap.endterm || 0))
-      );
-      weightedMarks[sub.code] = total;
-    });
+    const total = Math.round(
+      (opener * (weightMap.opener || 0)) +
+      (midterm * (weightMap.midterm || 0)) +
+      (endterm * (weightMap.endterm || 0))
+    );
+    weightedMarks[sub.code] = total;
   });
 
   return weightedMarks;
@@ -52,36 +50,50 @@ export function getFinalTermMarksLocal(
 interface MeritListProps {
   learners: Learner[];
   marks: AssessmentMarks;
+  config?: { assessments?: AssessmentConfig[] };
 }
 
-export default function MeritList({ learners, marks }: MeritListProps) {
+export default function MeritList({ learners, marks, config = {} }: MeritListProps) {
   const rankedLearners = useMemo(() => {
     return calculateMeritList(learners, marks);
   }, [learners, marks]);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Class Merit List</h2>
+    <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Class Merit List</h2>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider">
+            {rankedLearners.length} Learners Ranked
+          </span>
+        </div>
 
-      <div className="bg-white rounded-xl shadow border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100">
-            <tr>
-              <th className="p-3 text-left">Position</th>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rankedLearners.map((student) => (
-              <tr key={student.id} className="border-t">
-                <td className="p-3">{student.position}</td>
-                <td className="p-3">{student.name}</td>
-                <td className="p-3 font-semibold">{student.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          {rankedLearners.length > 0 ? (
+            <table className="w-full text-sm">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="p-4 text-left">Pos</th>
+                  <th className="p-4 text-left">Learner Name</th>
+                  <th className="p-4 text-right">Total Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rankedLearners.map((student) => (
+                  <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-mono font-bold text-slate-500">#{student.position}</td>
+                    <td className="p-4 font-medium text-slate-900">{student.name}</td>
+                    <td className="p-4 text-right font-bold text-blue-600">{student.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center text-slate-400">
+              <p>No merit data available yet. Please ensure marks are saved.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

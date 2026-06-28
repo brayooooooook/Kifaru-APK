@@ -440,15 +440,25 @@ const handleLogin = async (req: any, res: any) => {
       if (isMatch) {
         const secret = (db.config && db.config.jwtSecret) ? db.config.jwtSecret : (process.env.jwtSecret || process.env.JWT_SECRET || "muchorwe2026secretkey123");
         const token = jwtClient.sign({ id: user.id, username: user.username, role: user.role.toLowerCase() }, secret, { expiresIn: '24h' });
+        
+        // Ensure config exists as a fallback object to prevent frontend crashes
+        const config = db.config || {
+            schoolName: "MUCHORWE JUNIOR SCHOOL",
+            schoolMotto: "KNOWLEDGE TO EXCEL",
+            classTeacher: "MR BRIAN AYIECHA",
+            className: "GRADE 8 BLUE",
+            term: "TERM 2"
+        };
+
         return res.json({
           token,
           user: { id: user.id, username: user.username, role: user.role.toLowerCase() },
           config: {
-            schoolName: db.config.schoolName,
-            schoolMotto: db.config.schoolMotto,
-            classTeacher: db.config.classTeacher,
-            className: db.config.className,
-            term: db.config.term || "MID-TERM (TERM 2)"
+            schoolName: config.schoolName || "MUCHORWE JUNIOR SCHOOL",
+            schoolMotto: config.schoolMotto || "KNOWLEDGE TO EXCEL",
+            classTeacher: config.classTeacher || "MR BRIAN AYIECHA",
+            className: config.className || "GRADE 8 BLUE",
+            term: config.term || "TERM 2"
           }
         });
       }

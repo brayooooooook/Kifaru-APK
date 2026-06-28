@@ -27,8 +27,6 @@ interface MarksEntryProps {
   onAlert: (msg: string, type: "success" | "error") => void;
 }
 
-const MAX_BATCH_SIZE = 500;
-
 export default function MarksEntry({ learners, marks, config, onRefresh, onAlert }: MarksEntryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeAssessmentId, setActiveAssessmentId] = useState<string>("endterm");
@@ -99,9 +97,37 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
     } catch (err: any) { onAlert(err.message, "error"); } finally { setSavingId(null); }
   };
 
+  const handleSaveAll = async () => {
+    setSavingId("all");
+    try {
+      const batch = writeBatch(db);
+      learners.forEach(l => {
+        const rowData = localMarks[l.id] || {};
+        const payloadMarks: Record<string, number> = {};
+        SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
+        
+        const docRef = doc(db, "marks", l.id, "assessments", activeAssessmentId);
+        batch.set(docRef, {
+          learnerId: l.id,
+          assessmentId: activeAssessmentId,
+          subjectMarks: payloadMarks,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      });
+
+      await batch.commit();
+      onAlert("All marks saved successfully!", "success");
+      setHasUnsavedChanges(false);
+      onRefresh();
+    } catch (err: any) { 
+      onAlert("Error saving marks: " + err.message, "error"); 
+    } finally { 
+      setSavingId(null); 
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Search and Tab Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <input 
           type="text" 
@@ -128,7 +154,6 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
         </div>
       </div>
 
-      {/* Modern Styled Table */}
       <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -168,6 +193,17 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
             ))}
           </tbody>
         </table>
+        
+        {/* Save All Action */}
+        <div className="flex justify-end p-4 border-t border-slate-700 bg-slate-800">
+          <button 
+            disabled={activeAssessmentId === "terminal" || savingId === "all"} 
+            onClick={handleSaveAll}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+          >
+            {savingId === "all" ? "Saving All..." : "Save All Changes"}
+          </button>
+        </div>
       </div>
     </div>
   );

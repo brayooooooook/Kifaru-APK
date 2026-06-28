@@ -11,13 +11,20 @@ export function useDashboardStatistics(
   return useMemo(() => {  
     if (!learners.length) {  
       return {  
-        topLearner: { name: "N/A", total: 0, position: 0 },  
-        classMean: 0,  
-        highestScore: 0,  
-        lowestScore: 0,  
-        reportsGeneratedCount: 0  
-      };  
-    }  
+        topLearner: {
+        id: "",
+        name: "N/A",
+        admissionNumber: "N/A",
+       scores: {},
+       total: 0,
+       position: 0
+     },  
+     classMean: 0,  
+    highestScore: 0,  
+    lowestScore: 0,  
+    reportsGeneratedCount: 0  
+  };  
+}  
   
     const ranked = calculateMeritList(learners, marks);  
       

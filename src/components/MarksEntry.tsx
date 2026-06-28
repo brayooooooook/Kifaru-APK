@@ -100,22 +100,30 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
   const handleSaveAll = async () => {
     setSavingId("all");
     try {
-      const batch = writeBatch(db);
-      learners.forEach(l => {
-        const rowData = localMarks[l.id] || {};
-        const payloadMarks: Record<string, number> = {};
-        SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
+      const learnerIds = learners.map(l => l.id);
+      
+      // Process in chunks of 100 to keep the network requests snappy
+      for (let i = 0; i < learnerIds.length; i += 100) {
+        const batch = writeBatch(db);
+        const chunk = learnerIds.slice(i, i + 100);
         
-        const docRef = doc(db, "marks", l.id, "assessments", activeAssessmentId);
-        batch.set(docRef, {
-          learnerId: l.id,
-          assessmentId: activeAssessmentId,
-          subjectMarks: payloadMarks,
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
-      });
+        chunk.forEach(learnerId => {
+          const rowData = localMarks[learnerId] || {};
+          const payloadMarks: Record<string, number> = {};
+          SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
+          
+          const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
+          batch.set(docRef, {
+            learnerId: learnerId,
+            assessmentId: activeAssessmentId,
+            subjectMarks: payloadMarks,
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        });
 
-      await batch.commit();
+        await batch.commit();
+      }
+
       onAlert("All marks saved successfully!", "success");
       setHasUnsavedChanges(false);
       onRefresh();
@@ -194,7 +202,6 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
           </tbody>
         </table>
         
-        {/* Save All Action */}
         <div className="flex justify-end p-4 border-t border-slate-700 bg-slate-800">
           <button 
             disabled={activeAssessmentId === "terminal" || savingId === "all"} 

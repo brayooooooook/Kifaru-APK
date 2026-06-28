@@ -64,7 +64,10 @@ export default function LearnersManagement({
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to add learner");
+      if (!response.ok) {
+  const errorText = await response.text();
+  throw new Error(errorText || "Failed to add learner");
+      }
       onAlert("Learner added successfully", "success");
       setName("");
       setAdmissionNumber("");

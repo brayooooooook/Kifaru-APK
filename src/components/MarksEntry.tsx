@@ -97,45 +97,44 @@ export default function MarksEntry({ learners, marks, config, onRefresh, onAlert
     } catch (err: any) { onAlert(err.message, "error"); } finally { setSavingId(null); }
   };
 
+  // Blocking Save Function: Wait for database confirmation before proceeding
   const handleSaveAll = async () => {
-    onAlert("Saving in background...", "success");
+    onAlert("Saving all marks to database...", "success");
     setSavingId("all");
 
-    // Non-blocking background process
-    (async () => {
-      try {
-        const learnerIds = learners.map(l => l.id);
+    try {
+      const learnerIds = learners.map(l => l.id);
+      
+      for (let i = 0; i < learnerIds.length; i += 100) {
+        const batch = writeBatch(db);
+        const chunk = learnerIds.slice(i, i + 100);
         
-        for (let i = 0; i < learnerIds.length; i += 100) {
-          const batch = writeBatch(db);
-          const chunk = learnerIds.slice(i, i + 100);
+        chunk.forEach(learnerId => {
+          const rowData = localMarks[learnerId] || {};
+          const payloadMarks: Record<string, number> = {};
+          SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
           
-          chunk.forEach(learnerId => {
-            const rowData = localMarks[learnerId] || {};
-            const payloadMarks: Record<string, number> = {};
-            SUBJECTS.forEach((sub) => { payloadMarks[sub.code] = parseScore(rowData[sub.code]); });
-            
-            const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
-            batch.set(docRef, {
-              learnerId: learnerId,
-              assessmentId: activeAssessmentId,
-              subjectMarks: payloadMarks,
-              updatedAt: serverTimestamp(),
-            }, { merge: true });
-          });
+          const docRef = doc(db, "marks", learnerId, "assessments", activeAssessmentId);
+          batch.set(docRef, {
+            learnerId: learnerId,
+            assessmentId: activeAssessmentId,
+            subjectMarks: payloadMarks,
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        });
 
-          await batch.commit();
-        }
-
-        onAlert("All marks saved successfully!", "success");
-        setHasUnsavedChanges(false);
-        onRefresh();
-      } catch (err: any) { 
-        onAlert("Error saving marks: " + err.message, "error"); 
-      } finally { 
-        setSavingId(null);
+        // Await confirms the batch is successfully written to Firebase
+        await batch.commit();
       }
-    })();
+
+      onAlert("All marks saved successfully!", "success");
+      setHasUnsavedChanges(false);
+      onRefresh(); 
+    } catch (err: any) { 
+      onAlert("Error saving marks: " + err.message, "error"); 
+    } finally { 
+      setSavingId(null);
+    }
   };
 
   return (

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kifaru APK</string>
+    <string name="title_activity_main">Kifaru APK</string>
+    <string name="package_name">com.kifaruinteractive.longhaulafrica</string>
+    <string name="custom_url_scheme">com.kifaruinteractive.longhaulafrica</string>
+</resources>

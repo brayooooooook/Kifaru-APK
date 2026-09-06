@@ -1,9 +1,9 @@
 {
-  "name": "long-haul-africa",
+  "name": "kifaru-apk",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Long Haul Africa — original right-hand-drive American conventional truck simulator for left-side traffic.",
+  "description": "Kifaru APK — Long Haul Africa right-hand-drive truck simulator.",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",

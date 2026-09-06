@@ -125,7 +125,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 await addDir(unsigned, dist, 'assets/www');
 
 const unsignedBuf = await unsigned.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-const unsignedPath = join(outDir, 'long-haul-africa-unsigned.apk');
+const unsignedPath = join(outDir, 'Kifaru-APK-unsigned.apk');
 writeFileSync(unsignedPath, unsignedBuf);
 
 const attrs = [{ name: 'commonName', value: 'Kifaru Interactive' }, { name: 'organizationName', value: 'Kifaru Interactive' }];
@@ -143,7 +143,7 @@ const signer = new ApkSigner({
 });
 const signed = await signer.sign(new Uint8Array(unsignedBuf));
 const signedApk = signed.signedApk || signed;
-const signedPath = join(outDir, 'long-haul-africa-debug.apk');
+const signedPath = join(outDir, 'Kifaru-APK-debug.apk');
 writeFileSync(signedPath, signedApk);
 rmSync(work, { recursive: true, force: true });
 console.log('APK written:', signedPath, 'bytes', signedApk.length);

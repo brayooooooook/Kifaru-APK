@@ -1,4 +1,6 @@
-# Long Haul Africa
+# Kifaru APK
+
+**Long Haul Africa** — original mobile truck simulator.
 
 Original mobile truck simulator: **American-style conventional long-bonnet tractors**, **right-hand drive**, **left-side traffic**, set on a fictional East African corridor.
 
@@ -37,8 +39,8 @@ Covers diesel torque, gearbox, fuel, damage, and RHD / conventional-layout invar
 
 Installable APK (signed, v1+v2):
 
-- `releases/long-haul-africa-debug.apk`
-- `releases/long-haul-africa-release.apk`
+- `releases/Kifaru-APK-debug.apk`
+- `releases/Kifaru-APK-release.apk`
 
 Package ID: `com.kifaruinteractive.longhaulafrica`  
 Orientation: landscape · minSdk 21 · WebGL inside a native WebView.

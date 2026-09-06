@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.kifaruinteractive.longhaulafrica',
-  appName: 'Long Haul Africa',
+  appName: 'Kifaru APK',
   webDir: 'dist',
   android: {
     allowMixedContent: false,
